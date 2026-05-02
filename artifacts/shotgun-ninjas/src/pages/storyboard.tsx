@@ -216,6 +216,13 @@ export default function Storyboard() {
           toast({ title: "Direction saved", description: "Style and brand notes stored on project." });
           queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
         },
+        onError: (err) => {
+          toast({
+            title: "Failed to save direction",
+            description: err instanceof Error ? err.message : "Try again in a moment.",
+            variant: "destructive",
+          });
+        },
       },
     );
   };
@@ -244,6 +251,7 @@ export default function Storyboard() {
           toast({ title: "Scene duplicated" });
           invalidateScenes();
         },
+        onError: () => toast({ title: "Failed to duplicate scene", variant: "destructive" }),
         onSettled: () => setPendingScene(null),
       },
     );
@@ -258,6 +266,7 @@ export default function Storyboard() {
           toast({ title: "Scene deleted" });
           invalidateScenes();
         },
+        onError: () => toast({ title: "Failed to delete scene", variant: "destructive" }),
         onSettled: () => {
           setPendingScene(null);
           setConfirmDeleteId(null);
@@ -274,6 +283,7 @@ export default function Storyboard() {
           toast({ title: "Scene added" });
           invalidateScenes();
         },
+        onError: () => toast({ title: "Failed to add scene", variant: "destructive" }),
       },
     );
   };
@@ -286,6 +296,13 @@ export default function Storyboard() {
         onSuccess: () => {
           toast({ title: scene.locked ? "Scene unlocked" : "Scene locked", description: scene.locked ? "Will regenerate on next batch." : "Protected from regeneration." });
           invalidateScenes();
+        },
+        onError: (err) => {
+          toast({
+            title: "Failed to update lock",
+            description: err instanceof Error ? err.message : "Try again in a moment.",
+            variant: "destructive",
+          });
         },
         onSettled: () => setPendingScene(null),
       },

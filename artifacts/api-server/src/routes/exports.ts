@@ -45,10 +45,19 @@ function decorate<
 }
 
 router.get("/projects/:id/exports", async (req, res) => {
+  const id = req.params.id;
+  const [project] = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "project_not_found" });
+    return;
+  }
   const rows = await db
     .select()
     .from(exportsTable)
-    .where(eq(exportsTable.projectId, req.params.id))
+    .where(eq(exportsTable.projectId, id))
     .orderBy(exportsTable.createdAt);
   res.json(rows.map(decorate));
 });

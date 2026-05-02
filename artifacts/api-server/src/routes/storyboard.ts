@@ -9,6 +9,7 @@ import {
   lyricLinesTable,
   type StoryboardScene,
   type InsertStoryboardScene,
+  type TimelineSegment,
 } from "@workspace/db";
 import {
   UpdateSceneBody,
@@ -61,7 +62,16 @@ async function reindexProject(
 }
 
 router.get("/projects/:id/storyboard", async (req, res) => {
-  const scenes = await loadProjectScenes(db, req.params.id);
+  const id = req.params.id;
+  const [project] = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "project_not_found" });
+    return;
+  }
+  const scenes = await loadProjectScenes(db, id);
   res.json(scenes);
 });
 
@@ -169,6 +179,11 @@ router.post("/projects/:id/storyboard", async (req, res) => {
 
     if (force) {
       // Force: blow everything away and rebuild from segments only.
+      // Critically: do NOT early-return here — the status bump + activity
+      // row at the end of the tx body must run for both branches. (An
+      // earlier version `return inserted;`-d here, which silently skipped
+      // the status update for force=true regenerations, leaving stale
+      // statuses like "exported" sticky across regenerations.)
       await tx.delete(storyboardScenesTable).where(eq(storyboardScenesTable.projectId, id));
       const fresh = segments.map((seg) =>
         generateScene({
@@ -186,97 +201,137 @@ router.post("/projects/:id/storyboard", async (req, res) => {
       );
       const inserted = await tx.insert(storyboardScenesTable).values(fresh).returning();
       await remapLyricSceneIds(inserted);
-      return inserted;
+    } else {
+      // Non-force: preserve every locked scene (including manually-added
+      // ones with null segmentId). Inlined below — kept inside the same
+      // tx body so the trailing status bump applies to both branches.
+      await runIncrementalRegen({
+        tx,
+        existing,
+        segments,
+        project,
+        id,
+        visualStyle,
+        brandDirection,
+        lyrics,
+        lyricsForSegment,
+        remapLyricSceneIds,
+      });
     }
 
-    // Non-force: preserve every locked scene (including manually-added ones with null segmentId).
-    // Keep only the FIRST locked scene per segmentId; treat subsequent duplicates as non-segment locks
-    // (i.e. preserve them but they no longer claim a segment).
-    const lockedBySegment = new Map<string, StoryboardScene>();
-    const lockedFloating: StoryboardScene[] = [];
-    for (const s of existing) {
-      if (!s.locked) continue;
-      if (s.segmentId && !lockedBySegment.has(s.segmentId)) {
-        lockedBySegment.set(s.segmentId, s);
-      } else {
-        // floating: no segment, OR another locked already claims this segment
-        lockedFloating.push({ ...s, segmentId: null });
-      }
-    }
-
-    // Delete only unlocked scenes; locked scenes stay untouched (preserves prompts FK chain).
-    const toDelete = existing.filter((s) => !s.locked).map((s) => s.id);
-    for (const sceneId of toDelete) {
-      await tx.delete(storyboardScenesTable).where(eq(storyboardScenesTable.id, sceneId));
-    }
-
-    // For floating scenes that were re-marked (lost their segmentId), persist that change.
-    for (const f of lockedFloating) {
-      if (existing.find((s) => s.id === f.id)?.segmentId !== null) {
-        await tx
-          .update(storyboardScenesTable)
-          .set({ segmentId: null })
-          .where(eq(storyboardScenesTable.id, f.id));
-      }
-    }
-
-    // Generate new scenes for any segment without a locked scene already attached.
-    const toInsert: Omit<InsertStoryboardScene, "id">[] = [];
-    for (const seg of segments) {
-      if (lockedBySegment.has(seg.id)) continue;
-      toInsert.push(
-        generateScene({
-          projectId: id,
-          segment: seg,
-          totalSegments: segments.length,
-          songTitle: project.title,
-          artistName: project.artist,
-          visualStyle,
-          brandDirection: brandDirection ?? null,
-          lyrics: lyrics ?? null,
-          lyricLinesInScene: lyricsForSegment(seg),
-          seed: id,
-        }),
-      );
-    }
-
-    if (toInsert.length > 0) {
-      await tx.insert(storyboardScenesTable).values(toInsert);
-    }
-
-    // Remap any manual lyric sceneId assignments that pointed at unlocked
-    // scenes we just deleted — find the new scene with the same segmentId.
-    const allAfterInsert = await loadProjectScenes(tx, id);
-    await remapLyricSceneIds(allAfterInsert);
-
-    // Re-sort all scenes by startSec then existing index, and re-number.
-    const all = await loadProjectScenes(tx, id);
-    const ordered = [...all].sort((a, b) => a.startSec - b.startSec || a.index - b.index);
-    for (let i = 0; i < ordered.length; i++) {
-      const s = ordered[i]!;
-      if (s.index !== i) {
-        await tx
-          .update(storyboardScenesTable)
-          .set({ index: i })
-          .where(eq(storyboardScenesTable.id, s.id));
-      }
-    }
-
-    return loadProjectScenes(tx, id);
-  });
-
-  await db
-    .update(projectsTable)
-    .set({ status: "storyboarded", updatedAt: new Date() })
-    .where(eq(projectsTable.id, id));
-  await db.insert(activityTable).values({
-    projectId: id,
-    kind: "storyboard_generated",
-    message: `Generated ${inserted.length} storyboard scenes (${VISUAL_STYLES[visualStyle].label})`,
+    // Status bump + activity row MUST be in the same transaction as the
+    // scene mutations and MUST run for BOTH the force and non-force
+    // branches above. If we commit scenes and then crash before the
+    // status bump, or skip it for force=true, the project is left in an
+    // inconsistent state where the UI gating (status === 'storyboarded')
+    // disagrees with the actual scene rows.
+    const finalScenes = await loadProjectScenes(tx, id);
+    await tx
+      .update(projectsTable)
+      .set({ status: "storyboarded", updatedAt: new Date() })
+      .where(eq(projectsTable.id, id));
+    await tx.insert(activityTable).values({
+      projectId: id,
+      kind: "storyboard_generated",
+      message: `Generated ${finalScenes.length} storyboard scenes (${VISUAL_STYLES[visualStyle].label})`,
+    });
+    return finalScenes;
   });
 
   res.status(201).json(inserted);
 });
+
+// Helper extracted from the non-force regen branch above. Runs inside the
+// caller's transaction so the whole storyboard regen — including the
+// trailing status bump — is one atomic unit.
+async function runIncrementalRegen(args: {
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0];
+  existing: StoryboardScene[];
+  segments: TimelineSegment[];
+  project: { title: string; artist: string | null };
+  id: string;
+  visualStyle: keyof typeof VISUAL_STYLES;
+  brandDirection: string | null | undefined;
+  lyrics: string | null | undefined;
+  lyricsForSegment: (seg: TimelineSegment) => string[];
+  remapLyricSceneIds: (newScenes: StoryboardScene[]) => Promise<void>;
+}): Promise<void> {
+  const {
+    tx,
+    existing,
+    segments,
+    project,
+    id,
+    visualStyle,
+    brandDirection,
+    lyrics,
+    lyricsForSegment,
+    remapLyricSceneIds,
+  } = args;
+
+  const lockedBySegment = new Map<string, StoryboardScene>();
+  const lockedFloating: StoryboardScene[] = [];
+  for (const s of existing) {
+    if (!s.locked) continue;
+    if (s.segmentId && !lockedBySegment.has(s.segmentId)) {
+      lockedBySegment.set(s.segmentId, s);
+    } else {
+      lockedFloating.push({ ...s, segmentId: null });
+    }
+  }
+
+  const toDelete = existing.filter((s) => !s.locked).map((s) => s.id);
+  for (const sceneId of toDelete) {
+    await tx.delete(storyboardScenesTable).where(eq(storyboardScenesTable.id, sceneId));
+  }
+
+  for (const f of lockedFloating) {
+    if (existing.find((s) => s.id === f.id)?.segmentId !== null) {
+      await tx
+        .update(storyboardScenesTable)
+        .set({ segmentId: null })
+        .where(eq(storyboardScenesTable.id, f.id));
+    }
+  }
+
+  const toInsert: Omit<InsertStoryboardScene, "id">[] = [];
+  for (const seg of segments) {
+    if (lockedBySegment.has(seg.id)) continue;
+    toInsert.push(
+      generateScene({
+        projectId: id,
+        segment: seg,
+        totalSegments: segments.length,
+        songTitle: project.title,
+        artistName: project.artist,
+        visualStyle,
+        brandDirection: brandDirection ?? null,
+        lyrics: lyrics ?? null,
+        lyricLinesInScene: lyricsForSegment(seg),
+        seed: id,
+      }),
+    );
+  }
+
+  if (toInsert.length > 0) {
+    await tx.insert(storyboardScenesTable).values(toInsert);
+  }
+
+  const allAfterInsert = await loadProjectScenes(tx, id);
+  await remapLyricSceneIds(allAfterInsert);
+
+  const all = await loadProjectScenes(tx, id);
+  const ordered = [...all].sort((a, b) => a.startSec - b.startSec || a.index - b.index);
+  for (let i = 0; i < ordered.length; i++) {
+    const s = ordered[i]!;
+    if (s.index !== i) {
+      await tx
+        .update(storyboardScenesTable)
+        .set({ index: i })
+        .where(eq(storyboardScenesTable.id, s.id));
+    }
+  }
+}
 
 router.post("/projects/:id/storyboard/scenes", async (req, res) => {
   const id = req.params.id;
@@ -394,7 +449,14 @@ router.delete("/storyboard/:sceneId", async (req, res) => {
 
 router.post("/storyboard/:sceneId/regenerate", async (req, res) => {
   const sceneId = req.params.sceneId;
-  const force = req.query.force === "true" || req.body?.force === true;
+  // Coerce truthy strings ("true", "1") on either query or JSON body to a real
+  // boolean. Anything else is treated as false so a malformed body can't
+  // accidentally bypass the lock.
+  const force =
+    req.query.force === "true" ||
+    req.query.force === "1" ||
+    req.body?.force === true ||
+    req.body?.force === "true";
   const [scene] = await db
     .select()
     .from(storyboardScenesTable)

@@ -207,6 +207,7 @@ export default function BrandPresetsPage() {
           invalidate();
           toast({ title: "Preset duplicated" });
         },
+        onError: () => toast({ title: "Failed to duplicate preset", variant: "destructive" }),
       }
     );
   };

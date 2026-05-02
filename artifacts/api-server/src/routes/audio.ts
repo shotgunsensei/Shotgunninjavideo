@@ -66,33 +66,36 @@ router.post("/projects/:id/audio", async (req, res) => {
     return;
   }
 
-  await db.delete(audioFilesTable).where(eq(audioFilesTable.projectId, id));
-  const [audio] = await db
-    .insert(audioFilesTable)
-    .values({
+  // Replace existing audio metadata + bump project status atomically. Without
+  // a transaction a mid-flight failure would leave the project with no audio
+  // row but a stale "uploaded" status.
+  const audio = await db.transaction(async (tx) => {
+    await tx.delete(audioFilesTable).where(eq(audioFilesTable.projectId, id));
+    const [inserted] = await tx
+      .insert(audioFilesTable)
+      .values({
+        projectId: id,
+        fileName: body.fileName,
+        mimeType: body.mimeType,
+        sizeBytes: body.sizeBytes,
+        durationSec: body.durationSec ?? null,
+      })
+      .returning();
+    if (!inserted) throw new Error("audio_insert_failed");
+    await tx
+      .update(projectsTable)
+      .set({
+        status: "uploaded",
+        durationSec: body.durationSec ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(projectsTable.id, id));
+    await tx.insert(activityTable).values({
       projectId: id,
-      fileName: body.fileName,
-      mimeType: body.mimeType,
-      sizeBytes: body.sizeBytes,
-      durationSec: body.durationSec ?? null,
-    })
-    .returning();
-  if (!audio) {
-    res.status(500).json({ error: "Insert failed" });
-    return;
-  }
-  await db
-    .update(projectsTable)
-    .set({
-      status: "uploaded",
-      durationSec: body.durationSec ?? null,
-      updatedAt: new Date(),
-    })
-    .where(eq(projectsTable.id, id));
-  await db.insert(activityTable).values({
-    projectId: id,
-    kind: "audio_uploaded",
-    message: `Uploaded "${body.fileName}"`,
+      kind: "audio_uploaded",
+      message: `Uploaded "${body.fileName}"`,
+    });
+    return inserted;
   });
   res.status(201).json({ ...audio, createdAt: audio.createdAt.toISOString() });
 });
@@ -148,41 +151,47 @@ router.post("/projects/:id/analyze", async (req, res) => {
     source = "mock";
   }
 
-  await db.delete(timelineSegmentsTable).where(eq(timelineSegmentsTable.projectId, id));
-  await db.delete(analysisTable).where(eq(analysisTable.projectId, id));
+  // Replace analysis + segments + project status atomically so a partial
+  // failure can't leave the project with stale segments and a fresh analysis
+  // row (or vice versa).
+  const insertedSegs = await db.transaction(async (tx) => {
+    await tx.delete(timelineSegmentsTable).where(eq(timelineSegmentsTable.projectId, id));
+    await tx.delete(analysisTable).where(eq(analysisTable.projectId, id));
 
-  await db.insert(analysisTable).values({
-    projectId: id,
-    durationSec: duration,
-    bpm,
-    keySignature,
-    energy,
-    loudnessDb,
-    emotionalMap,
-  });
-  const insertedSegs = await db
-    .insert(timelineSegmentsTable)
-    .values(segmentInputs)
-    .returning();
-
-  await db
-    .update(projectsTable)
-    .set({
-      status: "analyzed",
+    await tx.insert(analysisTable).values({
+      projectId: id,
+      durationSec: duration,
       bpm,
       keySignature,
-      durationSec: duration,
-      updatedAt: new Date(),
-    })
-    .where(eq(projectsTable.id, id));
+      energy,
+      loudnessDb,
+      emotionalMap,
+    });
+    const segs = await tx
+      .insert(timelineSegmentsTable)
+      .values(segmentInputs)
+      .returning();
 
-  await db.insert(activityTable).values({
-    projectId: id,
-    kind: "analyzed",
-    message:
-      source === "client"
-        ? `Decoded audio — ${bpm} BPM, ${insertedSegs.length} segments detected`
-        : `Mock-analyzed audio — ${bpm} BPM, ${keySignature}`,
+    await tx
+      .update(projectsTable)
+      .set({
+        status: "analyzed",
+        bpm,
+        keySignature,
+        durationSec: duration,
+        updatedAt: new Date(),
+      })
+      .where(eq(projectsTable.id, id));
+
+    await tx.insert(activityTable).values({
+      projectId: id,
+      kind: "analyzed",
+      message:
+        source === "client"
+          ? `Decoded audio — ${bpm} BPM, ${segs.length} segments detected`
+          : `Mock-analyzed audio — ${bpm} BPM, ${keySignature}`,
+    });
+    return segs;
   });
 
   res.json({
@@ -199,9 +208,17 @@ router.post("/projects/:id/analyze", async (req, res) => {
 
 router.get("/projects/:id/analysis", async (req, res) => {
   const id = req.params.id;
+  // Distinguish "project doesn't exist" (404 project_not_found) from "project
+  // exists but hasn't been analyzed yet" (404 not_analyzed_yet) so the client
+  // can route the user appropriately instead of guessing.
+  const [project] = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "project_not_found" });
+    return;
+  }
   const [analysis] = await db.select().from(analysisTable).where(eq(analysisTable.projectId, id));
   if (!analysis) {
-    res.status(404).json({ error: "Not analyzed yet" });
+    res.status(404).json({ error: "not_analyzed_yet" });
     return;
   }
   const segments = await db
@@ -222,10 +239,16 @@ router.get("/projects/:id/analysis", async (req, res) => {
 });
 
 router.get("/projects/:id/timeline", async (req, res) => {
+  const id = req.params.id;
+  const [project] = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "project_not_found" });
+    return;
+  }
   const segments = await db
     .select()
     .from(timelineSegmentsTable)
-    .where(eq(timelineSegmentsTable.projectId, req.params.id))
+    .where(eq(timelineSegmentsTable.projectId, id))
     .orderBy(timelineSegmentsTable.index);
   res.json(segments);
 });

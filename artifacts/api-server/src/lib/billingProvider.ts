@@ -116,13 +116,31 @@ let provider: BillingProvider | null = null;
 
 /** Returns the active billing provider. Reads BILLING_PROVIDER from the env;
  *  when unset (or "mock"), uses the in-DB mock. The Stripe variant lands in a
- *  later PR — when it does, swap the import here, no other code changes. */
+ *  later PR — when it does, swap the import here, no other code changes.
+ *
+ *  Critically: if BILLING_PROVIDER=stripe is set in *production* but no
+ *  Stripe implementation is wired up, we throw at startup rather than
+ *  silently falling back to the mock. Silent fallback would mean a
+ *  "configured for paid billing" deployment is actually running unauthed
+ *  mock plan changes — exactly the kind of misconfiguration that should
+ *  fail loud. In dev we still allow the mock fallback (with a clear warn)
+ *  so contributors can iterate. */
 export function getBillingProvider(): BillingProvider {
   if (provider) return provider;
   const flag = (process.env.BILLING_PROVIDER ?? "mock").toLowerCase();
   if (flag === "stripe") {
-    // Future: provider = new StripeBillingProvider({ apiKey: process.env.STRIPE_SECRET_KEY! })
-    logger.warn("BILLING_PROVIDER=stripe set but Stripe provider is not implemented yet; falling back to mock.");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "BILLING_PROVIDER=stripe is set, but the Stripe provider is not implemented yet. " +
+          "Refusing to start in production with a misconfigured billing provider. " +
+          "Either wire up a StripeBillingProvider or unset BILLING_PROVIDER (defaults to 'mock').",
+      );
+    }
+    logger.warn(
+      "BILLING_PROVIDER=stripe set but Stripe provider is not implemented yet; using mock in development. This will hard-fail in production.",
+    );
+  } else if (flag !== "mock") {
+    logger.warn({ flag }, "Unknown BILLING_PROVIDER value; falling back to mock.");
   }
   provider = new MockBillingProvider();
   return provider;

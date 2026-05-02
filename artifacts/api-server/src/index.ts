@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedIfEmpty } from "./lib/seed";
+import { getBillingProvider } from "./lib/billingProvider";
 
 const rawPort = process.env["PORT"];
 
@@ -30,6 +31,14 @@ if (process.env["NODE_ENV"] === "production") {
     );
   }
 }
+
+// Boot-time validation of billing provider config. Without this, a
+// production deploy with BILLING_PROVIDER=stripe but missing Stripe creds
+// would only surface its misconfiguration on the first /billing/upgrade
+// call (i.e. the first paying user would see a 500). Calling the factory
+// here forces the throw to happen at process start so the deploy fails
+// loudly instead of silently shipping broken billing.
+getBillingProvider();
 
 await seedIfEmpty();
 

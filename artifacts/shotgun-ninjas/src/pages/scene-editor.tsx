@@ -88,7 +88,14 @@ export default function SceneEditor() {
       onSuccess: () => {
         toast({ title: "Scene saved", description: "Director's notes updated." });
         queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
-      }
+      },
+      onError: (err) => {
+        toast({
+          title: "Failed to save scene",
+          description: err instanceof Error ? err.message : "Try again in a moment.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
@@ -103,6 +110,13 @@ export default function SceneEditor() {
             description: scene.locked ? "Will regenerate on next batch." : "Protected from regeneration.",
           });
           queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
+        },
+        onError: (err) => {
+          toast({
+            title: "Failed to update lock",
+            description: err instanceof Error ? err.message : "Try again in a moment.",
+            variant: "destructive",
+          });
         },
       },
     );
@@ -123,7 +137,8 @@ export default function SceneEditor() {
       onSuccess: () => {
         toast({ title: "Prompt saved", description: "Generation parameters updated." });
         queryClient.invalidateQueries({ queryKey: getGetPromptsQueryKey(projectId) });
-      }
+      },
+      onError: () => toast({ title: "Failed to save prompt", variant: "destructive" }),
     });
   };
 
@@ -132,7 +147,8 @@ export default function SceneEditor() {
       onSuccess: () => {
         toast({ title: "Prompts generated", description: "AI prompts created for all scenes." });
         queryClient.invalidateQueries({ queryKey: getGetPromptsQueryKey(projectId) });
-      }
+      },
+      onError: () => toast({ title: "Failed to generate prompts", variant: "destructive" }),
     });
   };
 

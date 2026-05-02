@@ -38,7 +38,6 @@ router.post("/projects/:id/prompts", async (req, res) => {
   const aspectRatio = settings?.defaultAspectRatio ?? "16:9";
   const durationSec = settings?.defaultSceneDurationSec ?? 6;
 
-  await db.delete(promptsTable).where(eq(promptsTable.projectId, id));
   const toInsert = scenes.map((s) => ({
     projectId: id,
     sceneId: s.id,
@@ -49,15 +48,22 @@ router.post("/projects/:id/prompts", async (req, res) => {
     aspectRatio,
     durationSec,
   }));
-  const inserted = await db.insert(promptsTable).values(toInsert).returning();
-  await db
-    .update(projectsTable)
-    .set({ status: "prompted", updatedAt: new Date() })
-    .where(eq(projectsTable.id, id));
-  await db.insert(activityTable).values({
-    projectId: id,
-    kind: "prompts_generated",
-    message: `Generated ${inserted.length} scene prompts`,
+  // Replace prompts + bump project status atomically so a mid-flight failure
+  // can't leave the project with an empty prompts list while still flagged as
+  // "prompted".
+  const inserted = await db.transaction(async (tx) => {
+    await tx.delete(promptsTable).where(eq(promptsTable.projectId, id));
+    const rows = await tx.insert(promptsTable).values(toInsert).returning();
+    await tx
+      .update(projectsTable)
+      .set({ status: "prompted", updatedAt: new Date() })
+      .where(eq(projectsTable.id, id));
+    await tx.insert(activityTable).values({
+      projectId: id,
+      kind: "prompts_generated",
+      message: `Generated ${rows.length} scene prompts`,
+    });
+    return rows;
   });
   res.status(201).json(inserted);
 });

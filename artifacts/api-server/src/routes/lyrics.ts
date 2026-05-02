@@ -17,10 +17,19 @@ import { parseLyrics, lyricsForScene } from "../lib/lyricsParser";
 const router: IRouter = Router();
 
 router.get("/projects/:id/lyrics", async (req, res) => {
+  const id = req.params.id;
+  const [project] = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "project_not_found" });
+    return;
+  }
   const lines = await db
     .select()
     .from(lyricLinesTable)
-    .where(eq(lyricLinesTable.projectId, req.params.id))
+    .where(eq(lyricLinesTable.projectId, id))
     .orderBy(lyricLinesTable.index);
   res.json(lines);
 });

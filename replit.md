@@ -46,6 +46,15 @@ The API server is built with Express 5 and located at `artifacts/api-server`. It
 - `express-rate-limit` at 300 req / 15 min per IP on `/api/*` (with `app.set("trust proxy", 1)` so the limiter keys by the real client IP behind the Replit proxy).
 - A catch-all `/api` 404 handler followed by a centralized error middleware that maps `ZodError → 400`, `entity.too.large → 413`, CORS rejection → 403, and everything else → 500. In prod the message is sanitized; in dev the full message is returned. All errors are logged with request context via `req.log`.
 
+### Admin / billing access control
+
+- `artifacts/api-server/src/middleware/requireAdmin.ts` gates all `/api/admin/*` routes and the mutating billing routes (`POST /billing/upgrade`, `POST /billing/cancel`). In production the middleware refuses to start without `ADMIN_API_TOKEN` (returns 503), and rejects any request whose `X-Admin-Token` header doesn't match (401). In dev the gate soft-warns and allows through so iteration isn't blocked.
+- `artifacts/api-server/src/lib/billingProvider.ts` throws at construction time when `BILLING_PROVIDER=stripe` in production but Stripe credentials are absent — no silent mock fallback. `index.ts` calls `getBillingProvider()` at boot so the failure surfaces during deploy rather than on the first paying-user request.
+
+### Storyboard regen atomicity
+
+`POST /api/projects/:id/storyboard` runs the full regen — scene mutations, project status bump, and activity row — inside a single `db.transaction(...)`. Both the `force=true` (full rebuild) and `force=false` (incremental, preserves locked scenes via `runIncrementalRegen` helper) branches flow through a shared tail that flips `projects.status` to `"storyboarded"` and inserts a `storyboard_generated` activity row. There is no early return inside the tx body — atomicity is required so the UI gating (`status === "storyboarded"`) never disagrees with actual scene rows.
+
 Audio metadata uploads (`POST /api/projects/:id/audio`) additionally enforce a mime-type allowlist, the same 100 MB size cap as the client, a 255-char filename cap, and a project-existence check before any DB mutation.
 
 ### Graceful audio analysis fallback

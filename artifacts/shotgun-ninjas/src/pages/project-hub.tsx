@@ -97,6 +97,7 @@ export default function ProjectHub() {
           queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({ title: "Project updated" });
         },
+        onError: () => toast({ title: "Failed to update project", variant: "destructive" }),
       },
     );
   };
@@ -136,6 +137,7 @@ export default function ProjectHub() {
         onSuccess: () => {
           window.location.href = "/dashboard";
         },
+        onError: () => toast({ title: "Failed to delete project", variant: "destructive" }),
       },
     );
   };

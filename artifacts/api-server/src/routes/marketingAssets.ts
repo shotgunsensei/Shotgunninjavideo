@@ -19,6 +19,27 @@ import {
   type MarketingExportFormat,
 } from "../lib/marketingAssetGenerator";
 import { RegenerateMarketingAssetBody } from "@workspace/api-zod";
+import { hasFeature, requiredPlanForFeature, PLAN_CATALOG } from "@workspace/billing";
+import { getBillingProvider } from "../lib/billingProvider";
+
+// The marketing asset pack is a Studio-tier feature in lib/billing's catalog
+// (`social_captions`). Free + Creator plans see the page but get a 402 when
+// they try to generate, with `requiredPlan` so the client can show an upgrade
+// prompt instead of a generic error.
+async function requireMarketingFeature(): Promise<{ ok: true } | { ok: false; required: { plan: string; planName: string; feature: string } }> {
+  const billing = await getBillingProvider().getCurrent();
+  if (hasFeature(billing.plan, "social_captions")) return { ok: true };
+  const requiredPlanId = requiredPlanForFeature("social_captions");
+  const requiredPlan = PLAN_CATALOG[requiredPlanId];
+  return {
+    ok: false,
+    required: {
+      plan: requiredPlanId,
+      planName: requiredPlan?.name ?? requiredPlanId,
+      feature: "social_captions",
+    },
+  };
+}
 
 const VALID_EXPORT_FORMATS: ReadonlyArray<MarketingExportFormat> = ["txt", "csv", "json"];
 
@@ -71,6 +92,15 @@ router.get("/projects/:id/marketing-assets", async (req, res) => {
 
 // Generate ALL kinds at once (idempotent — overwrites in place per (project, kind)).
 router.post("/projects/:id/marketing-assets/generate", async (req, res) => {
+  const gate = await requireMarketingFeature();
+  if (!gate.ok) {
+    res.status(402).json({
+      error: "plan_required",
+      message: `Marketing asset pack requires the ${gate.required.planName} plan.`,
+      required: gate.required,
+    });
+    return;
+  }
   const ctx = await loadContext(req.params.id);
   if (!ctx) {
     res.status(404).json({ error: "project_not_found" });
@@ -107,6 +137,15 @@ router.post("/projects/:id/marketing-assets/generate", async (req, res) => {
 
 // Regenerate ONE kind.
 router.post("/projects/:id/marketing-assets/regenerate", async (req, res) => {
+  const gate = await requireMarketingFeature();
+  if (!gate.ok) {
+    res.status(402).json({
+      error: "plan_required",
+      message: `Marketing asset pack requires the ${gate.required.planName} plan.`,
+      required: gate.required,
+    });
+    return;
+  }
   const body = RegenerateMarketingAssetBody.parse(req.body);
   if (!isKind(body.kind)) {
     res.status(400).json({ error: "invalid_kind" });

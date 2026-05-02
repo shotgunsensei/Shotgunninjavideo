@@ -175,42 +175,60 @@ export default function LyricsPage() {
       toast({ title: "Paste lyrics first", variant: "destructive" });
       return;
     }
-    const result = await parseM.mutateAsync({ id: projectId, data: { raw } });
-    setDraftLines(
-      result.lines.map((l) => ({
-        id: null,
-        text: l.text,
-        timestampSec: l.timestampSec ?? null,
-        sceneId: null,
-      })),
-    );
-    toast({
-      title: result.hasTimestamps
-        ? `Parsed ${result.lines.length} timestamped lines`
-        : `Parsed ${result.lines.length} plain lines`,
-      description: result.hasTimestamps
-        ? "Lyrics will auto-align to scene time windows."
-        : "You can manually assign each line to a scene below.",
-    });
+    try {
+      const result = await parseM.mutateAsync({ id: projectId, data: { raw } });
+      setDraftLines(
+        result.lines.map((l) => ({
+          id: null,
+          text: l.text,
+          timestampSec: l.timestampSec ?? null,
+          sceneId: null,
+        })),
+      );
+      toast({
+        title: result.hasTimestamps
+          ? `Parsed ${result.lines.length} timestamped lines`
+          : `Parsed ${result.lines.length} plain lines`,
+        description: result.hasTimestamps
+          ? "Lyrics will auto-align to scene time windows."
+          : "You can manually assign each line to a scene below.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to parse lyrics",
+        description: err instanceof Error ? err.message : "Check the format and try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   async function handleSave() {
-    const fresh = await saveM.mutateAsync({
-      id: projectId,
-      data: {
-        lines: draftLines.map((l) => ({
-          text: l.text,
-          timestampSec: l.timestampSec,
-          sceneId: l.sceneId,
-        })),
-      },
-    });
-    // Replace draft with the canonical server response so row ids align with
-    // the freshly-inserted rows (the PUT does delete+insert and re-issues ids).
-    hydrateFromServer(fresh);
-    invalidateLyrics();
-    queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
-    toast({ title: "Lyrics saved", description: `${fresh.length} lines persisted.` });
+    try {
+      const fresh = await saveM.mutateAsync({
+        id: projectId,
+        data: {
+          lines: draftLines.map((l) => ({
+            text: l.text,
+            timestampSec: l.timestampSec,
+            sceneId: l.sceneId,
+          })),
+        },
+      });
+      // Replace draft with the canonical server response so row ids align with
+      // the freshly-inserted rows (the PUT does delete+insert and re-issues ids).
+      hydrateFromServer(fresh);
+      invalidateLyrics();
+      queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
+      toast({ title: "Lyrics saved", description: `${fresh.length} lines persisted.` });
+    } catch (err) {
+      // mutateAsync rethrows — surface a destructive toast instead of leaving
+      // the user with a silent unhandled promise rejection.
+      toast({
+        title: "Failed to save lyrics",
+        description: err instanceof Error ? err.message : "Try again in a moment.",
+        variant: "destructive",
+      });
+    }
   }
 
   function updateDraft(idx: number, patch: Partial<(typeof draftLines)[number]>) {
@@ -227,16 +245,24 @@ export default function LyricsPage() {
   async function handleDeleteDraft(idx: number) {
     const line = draftLines[idx];
     if (!line) return;
-    if (line.id) {
-      // Persist deletion immediately if it exists on server
-      const remaining = await deleteLineM.mutateAsync({ lineId: line.id });
-      hydrateFromServer(remaining);
-      invalidateLyrics();
-    } else {
-      setDraftLines((prev) => prev.filter((_, i) => i !== idx));
+    try {
+      if (line.id) {
+        // Persist deletion immediately if it exists on server
+        const remaining = await deleteLineM.mutateAsync({ lineId: line.id });
+        hydrateFromServer(remaining);
+        invalidateLyrics();
+      } else {
+        setDraftLines((prev) => prev.filter((_, i) => i !== idx));
+      }
+      setPendingDeleteId(null);
+      toast({ title: "Line removed" });
+    } catch (err) {
+      toast({
+        title: "Failed to remove line",
+        description: err instanceof Error ? err.message : "Try again in a moment.",
+        variant: "destructive",
+      });
     }
-    setPendingDeleteId(null);
-    toast({ title: "Line removed" });
   }
 
   async function handleAutoAssign() {
@@ -248,15 +274,22 @@ export default function LyricsPage() {
       });
       return;
     }
-    if (isDirty) await handleSave();
-    const fresh = await autoAssignM.mutateAsync({ id: projectId });
-    hydrateFromServer(fresh);
-    invalidateLyrics();
-    toast({ title: "Lyrics auto-assigned to scenes" });
+    try {
+      if (isDirty) await handleSave();
+      const fresh = await autoAssignM.mutateAsync({ id: projectId });
+      hydrateFromServer(fresh);
+      invalidateLyrics();
+      toast({ title: "Lyrics auto-assigned to scenes" });
+    } catch (err) {
+      toast({
+        title: "Auto-assign failed",
+        description: err instanceof Error ? err.message : "Try again in a moment.",
+        variant: "destructive",
+      });
+    }
   }
 
   async function handleImproveStoryboard() {
-    if (isDirty) await handleSave();
     if (scenes.length === 0) {
       toast({
         title: "No storyboard yet",
@@ -265,18 +298,27 @@ export default function LyricsPage() {
       });
       return;
     }
-    await generateM.mutateAsync({
-      id: projectId,
-      data: {
-        lyrics: draftLines.map((l) => l.text).join("\n"),
-        force: false,
-      },
-    });
-    queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
-    toast({
-      title: "Storyboard refreshed",
-      description: "Unlocked scenes were re-imagined using your lyrics.",
-    });
+    try {
+      if (isDirty) await handleSave();
+      await generateM.mutateAsync({
+        id: projectId,
+        data: {
+          lyrics: draftLines.map((l) => l.text).join("\n"),
+          force: false,
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
+      toast({
+        title: "Storyboard refreshed",
+        description: "Unlocked scenes were re-imagined using your lyrics.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to refresh storyboard",
+        description: err instanceof Error ? err.message : "Try again in a moment.",
+        variant: "destructive",
+      });
+    }
   }
 
   const sceneLookup = useMemo(() => {
