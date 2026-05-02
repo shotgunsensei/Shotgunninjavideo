@@ -3,20 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Shotgun Ninjas Video Engine API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: projects
+  - name: audio
+  - name: timeline
+  - name: storyboard
+  - name: prompts
+  - name: exports
+  - name: settings
+  - name: stats
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +30,697 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /stats/overview:
+    get:
+      operationId: getStatsOverview
+      tags: [stats]
+      summary: Dashboard overview stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsOverview"
+
+  /stats/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Recent activity feed
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{id}/audio:
+    post:
+      operationId: uploadAudio
+      tags: [audio]
+      summary: Register an uploaded audio file (metadata only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadAudioInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioFile"
+
+  /projects/{id}/analyze:
+    post:
+      operationId: analyzeAudio
+      tags: [audio]
+      summary: Run mock audio analysis to populate timeline + emotional map
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /projects/{id}/analysis:
+    get:
+      operationId: getAnalysis
+      tags: [audio]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /projects/{id}/timeline:
+    get:
+      operationId: getTimeline
+      tags: [timeline]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineSegment"
+
+  /projects/{id}/storyboard:
+    get:
+      operationId: getStoryboard
+      tags: [storyboard]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryboardScene"
+    post:
+      operationId: generateStoryboard
+      tags: [storyboard]
+      summary: Generate storyboard scenes from analyzed timeline
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryboardScene"
+
+  /storyboard/{sceneId}:
+    patch:
+      operationId: updateScene
+      tags: [storyboard]
+      parameters:
+        - in: path
+          name: sceneId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSceneInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryboardScene"
+
+  /projects/{id}/prompts:
+    get:
+      operationId: getPrompts
+      tags: [prompts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prompt"
+    post:
+      operationId: generatePrompts
+      tags: [prompts]
+      summary: Generate scene prompts from storyboard
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prompt"
+
+  /prompts/{promptId}:
+    patch:
+      operationId: updatePrompt
+      tags: [prompts]
+      parameters:
+        - in: path
+          name: promptId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePromptInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Prompt"
+
+  /projects/{id}/exports:
+    get:
+      operationId: listExports
+      tags: [exports]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExportRecord"
+    post:
+      operationId: createExport
+      tags: [exports]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExportInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportRecord"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    StatsOverview:
+      type: object
+      required:
+        - totalProjects
+        - totalScenes
+        - totalPrompts
+        - totalExports
+        - analyzedProjects
+      properties:
+        totalProjects: { type: integer }
+        totalScenes: { type: integer }
+        totalPrompts: { type: integer }
+        totalExports: { type: integer }
+        analyzedProjects: { type: integer }
+
+    ActivityItem:
+      type: object
+      required: [id, kind, message, projectId, createdAt]
+      properties:
+        id: { type: string }
+        kind:
+          type: string
+          enum: [project_created, audio_uploaded, analyzed, storyboard_generated, prompts_generated, exported]
+        message: { type: string }
+        projectId: { type: string }
+        projectTitle: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Project:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: string }
+        title: { type: string }
+        artist: { type: string }
+        genre: { type: string }
+        mood: { type: string }
+        visualDirection: { type: string }
+        status:
+          type: string
+          enum: [draft, uploaded, analyzed, storyboarded, prompted, exported]
+        coverColor: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        sceneCount: { type: integer }
+        promptCount: { type: integer }
+        exportCount: { type: integer }
+        durationSec: { type: number }
+        bpm: { type: number }
+        keySignature: { type: string }
+
+    ProjectDetail:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          properties:
+            audio:
+              $ref: "#/components/schemas/AudioFile"
+            analysis:
+              $ref: "#/components/schemas/AnalysisResult"
+
+    CreateProjectInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1 }
+        artist: { type: string }
+        genre: { type: string }
+        mood: { type: string }
+        visualDirection: { type: string }
+
+    UpdateProjectInput:
+      type: object
+      properties:
+        title: { type: string }
+        artist: { type: string }
+        genre: { type: string }
+        mood: { type: string }
+        visualDirection: { type: string }
+        status:
+          type: string
+          enum: [draft, uploaded, analyzed, storyboarded, prompted, exported]
+
+    AudioFile:
+      type: object
+      required: [id, projectId, fileName, mimeType, sizeBytes, createdAt]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        fileName: { type: string }
+        mimeType: { type: string }
+        sizeBytes: { type: integer }
+        durationSec: { type: number }
+        createdAt: { type: string, format: date-time }
+
+    UploadAudioInput:
+      type: object
+      required: [fileName, sizeBytes, mimeType]
+      properties:
+        fileName: { type: string }
+        sizeBytes: { type: integer }
+        mimeType: { type: string }
+        durationSec: { type: number }
+
+    TimelineSegment:
+      type: object
+      required:
+        - id
+        - projectId
+        - index
+        - startSec
+        - endSec
+        - section
+        - intensity
+        - emotion
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        index: { type: integer }
+        startSec: { type: number }
+        endSec: { type: number }
+        section:
+          type: string
+          enum: [intro, verse, pre_chorus, chorus, bridge, drop, breakdown, outro]
+        intensity: { type: number, description: "0..1" }
+        emotion: { type: string }
+        bpm: { type: number }
+
+    AnalysisResult:
+      type: object
+      required:
+        - projectId
+        - durationSec
+        - bpm
+        - keySignature
+        - energy
+        - segments
+        - emotionalMap
+      properties:
+        projectId: { type: string }
+        durationSec: { type: number }
+        bpm: { type: number }
+        keySignature: { type: string }
+        energy: { type: number }
+        loudnessDb: { type: number }
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineSegment"
+        emotionalMap:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmotionalPoint"
+
+    EmotionalPoint:
+      type: object
+      required: [timeSec, valence, arousal, label]
+      properties:
+        timeSec: { type: number }
+        valence: { type: number }
+        arousal: { type: number }
+        label: { type: string }
+
+    StoryboardScene:
+      type: object
+      required:
+        - id
+        - projectId
+        - index
+        - startSec
+        - endSec
+        - title
+        - description
+        - shotType
+        - cameraMovement
+        - location
+        - lighting
+        - colorPalette
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        segmentId: { type: string }
+        index: { type: integer }
+        startSec: { type: number }
+        endSec: { type: number }
+        title: { type: string }
+        description: { type: string }
+        shotType: { type: string }
+        cameraMovement: { type: string }
+        location: { type: string }
+        lighting: { type: string }
+        colorPalette: { type: string }
+        wardrobe: { type: string }
+        notes: { type: string }
+
+    UpdateSceneInput:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        shotType: { type: string }
+        cameraMovement: { type: string }
+        location: { type: string }
+        lighting: { type: string }
+        colorPalette: { type: string }
+        wardrobe: { type: string }
+        notes: { type: string }
+
+    Prompt:
+      type: object
+      required:
+        - id
+        - projectId
+        - sceneId
+        - index
+        - model
+        - text
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        sceneId: { type: string }
+        index: { type: integer }
+        model:
+          type: string
+          enum: [runway, sora, kling, pika, luma, generic]
+        text: { type: string }
+        negativePrompt: { type: string }
+        aspectRatio: { type: string }
+        durationSec: { type: number }
+
+    UpdatePromptInput:
+      type: object
+      properties:
+        text: { type: string }
+        negativePrompt: { type: string }
+        model:
+          type: string
+          enum: [runway, sora, kling, pika, luma, generic]
+        aspectRatio: { type: string }
+        durationSec: { type: number }
+
+    ExportRecord:
+      type: object
+      required: [id, projectId, format, content, createdAt]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        format:
+          type: string
+          enum: [json, txt, production_plan]
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    CreateExportInput:
+      type: object
+      required: [format]
+      properties:
+        format:
+          type: string
+          enum: [json, txt, production_plan]
+
+    Settings:
+      type: object
+      required: [defaultModel, defaultAspectRatio, defaultSceneDurationSec, theme]
+      properties:
+        defaultModel:
+          type: string
+          enum: [runway, sora, kling, pika, luma, generic]
+        defaultAspectRatio: { type: string }
+        defaultSceneDurationSec: { type: number }
+        theme:
+          type: string
+          enum: [dark, light]
+        creatorName: { type: string }
+        creatorHandle: { type: string }
+
+    UpdateSettingsInput:
+      type: object
+      properties:
+        defaultModel:
+          type: string
+          enum: [runway, sora, kling, pika, luma, generic]
+        defaultAspectRatio: { type: string }
+        defaultSceneDurationSec: { type: number }
+        theme:
+          type: string
+          enum: [dark, light]
+        creatorName: { type: string }
+        creatorHandle: { type: string }

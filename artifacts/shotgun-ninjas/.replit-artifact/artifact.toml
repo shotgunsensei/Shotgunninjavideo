@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Shotgun Ninjas Video Engine"
+version = "1.0.0"
+id = "artifacts/shotgun-ninjas"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25388
+
+[services.development]
+run = "pnpm --filter @workspace/shotgun-ninjas run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/shotgun-ninjas", "run", "build" ]
+publicDir = "artifacts/shotgun-ninjas/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25388"
+BASE_PATH = "/"

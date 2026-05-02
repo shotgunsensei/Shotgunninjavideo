@@ -1,0 +1,25 @@
+import { pgTable, text, doublePrecision, varchar, integer } from "drizzle-orm/pg-core";
+import { createId } from "@paralleldrive/cuid2";
+import { projectsTable } from "./projects";
+import { timelineSegmentsTable } from "./timeline";
+
+export const storyboardScenesTable = pgTable("storyboard_scenes", {
+  id: varchar("id", { length: 32 }).primaryKey().$defaultFn(() => createId()),
+  projectId: varchar("project_id", { length: 32 }).notNull().references(() => projectsTable.id, { onDelete: "cascade" }),
+  segmentId: varchar("segment_id", { length: 32 }).references(() => timelineSegmentsTable.id, { onDelete: "set null" }),
+  index: integer("index").notNull(),
+  startSec: doublePrecision("start_sec").notNull(),
+  endSec: doublePrecision("end_sec").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  shotType: text("shot_type").notNull(),
+  cameraMovement: text("camera_movement").notNull(),
+  location: text("location").notNull(),
+  lighting: text("lighting").notNull(),
+  colorPalette: text("color_palette").notNull(),
+  wardrobe: text("wardrobe"),
+  notes: text("notes"),
+});
+
+export type StoryboardScene = typeof storyboardScenesTable.$inferSelect;
+export type InsertStoryboardScene = typeof storyboardScenesTable.$inferInsert;
