@@ -36,7 +36,15 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 
 ## Workflow
 
-Upload song → analyze audio (mock, deterministic per project) → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+
+The analysis screen (`pages/analysis.tsx`) drives the deep-thinking flow via `runDeepThinking(useMock)`:
+- Stages 1–2 are powered by real Web Audio analysis when an audio file is cached locally (IndexedDB), with stage substep progress driven by `analyzeAudioFile` callbacks.
+- A "Mock Pass" button always works (no audio required) and submits with no body so the API server returns deterministic mock data.
+- Stages 3–5 are derived from the result via `lib/visualStyle.ts` (palette/lensing/pacing/descriptors + emotional arc summary).
+- The Content Preview stage renders a final summary inline: Audio DNA tiles, emotional arc bar, recommended visual style card, estimated scene count, and "Generate Storyboard" CTA.
+
+Layout (`components/layout.tsx`) collapses the sidebar into a Sheet on mobile (<md) for narrow viewports.
 
 A demo project ("Black Velvet Static" by RONIN/X) is seeded on first server start so the dashboard is never empty.
 
