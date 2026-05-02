@@ -22,18 +22,22 @@ import type {
   AudioFile,
   CreateExportInput,
   CreateProjectInput,
+  CreateSegmentInput,
   ExportRecord,
   HealthStatus,
   Project,
   ProjectDetail,
   Prompt,
   Settings,
+  SplitSegmentInput,
   StatsOverview,
   StoryboardScene,
+  SubmitAnalysisInput,
   TimelineSegment,
   UpdateProjectInput,
   UpdatePromptInput,
   UpdateSceneInput,
+  UpdateSegmentInput,
   UpdateSettingsInput,
   UploadAudioInput,
 } from "./api.schemas";
@@ -760,7 +764,7 @@ export const useUploadAudio = <
 };
 
 /**
- * @summary Run mock audio analysis to populate timeline + emotional map
+ * @summary Submit audio analysis (client-computed); falls back to deterministic mock if no body provided
  */
 export const getAnalyzeAudioUrl = (id: string) => {
   return `/api/projects/${id}/analyze`;
@@ -768,11 +772,14 @@ export const getAnalyzeAudioUrl = (id: string) => {
 
 export const analyzeAudio = async (
   id: string,
+  submitAnalysisInput?: SubmitAnalysisInput,
   options?: RequestInit,
 ): Promise<AnalysisResult> => {
   return customFetch<AnalysisResult>(getAnalyzeAudioUrl(id), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(submitAnalysisInput),
   });
 };
 
@@ -783,14 +790,14 @@ export const getAnalyzeAudioMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof analyzeAudio>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<SubmitAnalysisInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof analyzeAudio>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<SubmitAnalysisInput> },
   TContext
 > => {
   const mutationKey = ["analyzeAudio"];
@@ -804,11 +811,11 @@ export const getAnalyzeAudioMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof analyzeAudio>>,
-    { id: string }
+    { id: string; data: BodyType<SubmitAnalysisInput> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return analyzeAudio(id, requestOptions);
+    return analyzeAudio(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -817,11 +824,11 @@ export const getAnalyzeAudioMutationOptions = <
 export type AnalyzeAudioMutationResult = NonNullable<
   Awaited<ReturnType<typeof analyzeAudio>>
 >;
-
+export type AnalyzeAudioMutationBody = BodyType<SubmitAnalysisInput>;
 export type AnalyzeAudioMutationError = ErrorType<unknown>;
 
 /**
- * @summary Run mock audio analysis to populate timeline + emotional map
+ * @summary Submit audio analysis (client-computed); falls back to deterministic mock if no body provided
  */
 export const useAnalyzeAudio = <
   TError = ErrorType<unknown>,
@@ -830,14 +837,14 @@ export const useAnalyzeAudio = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof analyzeAudio>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<SubmitAnalysisInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof analyzeAudio>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<SubmitAnalysisInput> },
   TContext
 > => {
   return useMutation(getAnalyzeAudioMutationOptions(options));
@@ -1002,6 +1009,339 @@ export function useGetTimeline<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Insert a new timeline segment at a given time
+ */
+export const getCreateSegmentUrl = (id: string) => {
+  return `/api/projects/${id}/timeline/segments`;
+};
+
+export const createSegment = async (
+  id: string,
+  createSegmentInput: CreateSegmentInput,
+  options?: RequestInit,
+): Promise<TimelineSegment[]> => {
+  return customFetch<TimelineSegment[]>(getCreateSegmentUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSegmentInput),
+  });
+};
+
+export const getCreateSegmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSegment>>,
+    TError,
+    { id: string; data: BodyType<CreateSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createSegment>>,
+  TError,
+  { id: string; data: BodyType<CreateSegmentInput> },
+  TContext
+> => {
+  const mutationKey = ["createSegment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createSegment>>,
+    { id: string; data: BodyType<CreateSegmentInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createSegment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateSegmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createSegment>>
+>;
+export type CreateSegmentMutationBody = BodyType<CreateSegmentInput>;
+export type CreateSegmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Insert a new timeline segment at a given time
+ */
+export const useCreateSegment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSegment>>,
+    TError,
+    { id: string; data: BodyType<CreateSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createSegment>>,
+  TError,
+  { id: string; data: BodyType<CreateSegmentInput> },
+  TContext
+> => {
+  return useMutation(getCreateSegmentMutationOptions(options));
+};
+
+export const getUpdateSegmentUrl = (segmentId: string) => {
+  return `/api/timeline-segments/${segmentId}`;
+};
+
+export const updateSegment = async (
+  segmentId: string,
+  updateSegmentInput: UpdateSegmentInput,
+  options?: RequestInit,
+): Promise<TimelineSegment[]> => {
+  return customFetch<TimelineSegment[]>(getUpdateSegmentUrl(segmentId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateSegmentInput),
+  });
+};
+
+export const getUpdateSegmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSegment>>,
+    TError,
+    { segmentId: string; data: BodyType<UpdateSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateSegment>>,
+  TError,
+  { segmentId: string; data: BodyType<UpdateSegmentInput> },
+  TContext
+> => {
+  const mutationKey = ["updateSegment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateSegment>>,
+    { segmentId: string; data: BodyType<UpdateSegmentInput> }
+  > = (props) => {
+    const { segmentId, data } = props ?? {};
+
+    return updateSegment(segmentId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateSegmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateSegment>>
+>;
+export type UpdateSegmentMutationBody = BodyType<UpdateSegmentInput>;
+export type UpdateSegmentMutationError = ErrorType<unknown>;
+
+export const useUpdateSegment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSegment>>,
+    TError,
+    { segmentId: string; data: BodyType<UpdateSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateSegment>>,
+  TError,
+  { segmentId: string; data: BodyType<UpdateSegmentInput> },
+  TContext
+> => {
+  return useMutation(getUpdateSegmentMutationOptions(options));
+};
+
+export const getDeleteSegmentUrl = (segmentId: string) => {
+  return `/api/timeline-segments/${segmentId}`;
+};
+
+export const deleteSegment = async (
+  segmentId: string,
+  options?: RequestInit,
+): Promise<TimelineSegment[]> => {
+  return customFetch<TimelineSegment[]>(getDeleteSegmentUrl(segmentId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteSegmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSegment>>,
+    TError,
+    { segmentId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteSegment>>,
+  TError,
+  { segmentId: string },
+  TContext
+> => {
+  const mutationKey = ["deleteSegment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteSegment>>,
+    { segmentId: string }
+  > = (props) => {
+    const { segmentId } = props ?? {};
+
+    return deleteSegment(segmentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteSegmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteSegment>>
+>;
+
+export type DeleteSegmentMutationError = ErrorType<unknown>;
+
+export const useDeleteSegment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSegment>>,
+    TError,
+    { segmentId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteSegment>>,
+  TError,
+  { segmentId: string },
+  TContext
+> => {
+  return useMutation(getDeleteSegmentMutationOptions(options));
+};
+
+/**
+ * @summary Split a segment in two at the given time (defaults to midpoint)
+ */
+export const getSplitSegmentUrl = (segmentId: string) => {
+  return `/api/timeline-segments/${segmentId}/split`;
+};
+
+export const splitSegment = async (
+  segmentId: string,
+  splitSegmentInput?: SplitSegmentInput,
+  options?: RequestInit,
+): Promise<TimelineSegment[]> => {
+  return customFetch<TimelineSegment[]>(getSplitSegmentUrl(segmentId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(splitSegmentInput),
+  });
+};
+
+export const getSplitSegmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof splitSegment>>,
+    TError,
+    { segmentId: string; data: BodyType<SplitSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof splitSegment>>,
+  TError,
+  { segmentId: string; data: BodyType<SplitSegmentInput> },
+  TContext
+> => {
+  const mutationKey = ["splitSegment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof splitSegment>>,
+    { segmentId: string; data: BodyType<SplitSegmentInput> }
+  > = (props) => {
+    const { segmentId, data } = props ?? {};
+
+    return splitSegment(segmentId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SplitSegmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof splitSegment>>
+>;
+export type SplitSegmentMutationBody = BodyType<SplitSegmentInput>;
+export type SplitSegmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Split a segment in two at the given time (defaults to midpoint)
+ */
+export const useSplitSegment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof splitSegment>>,
+    TError,
+    { segmentId: string; data: BodyType<SplitSegmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof splitSegment>>,
+  TError,
+  { segmentId: string; data: BodyType<SplitSegmentInput> },
+  TContext
+> => {
+  return useMutation(getSplitSegmentMutationOptions(options));
+};
 
 export const getGetStoryboardUrl = (id: string) => {
   return `/api/projects/${id}/storyboard`;

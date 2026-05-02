@@ -242,10 +242,47 @@ export const UploadAudioBody = zod.object({
 });
 
 /**
- * @summary Run mock audio analysis to populate timeline + emotional map
+ * @summary Submit audio analysis (client-computed); falls back to deterministic mock if no body provided
  */
 export const AnalyzeAudioParams = zod.object({
   id: zod.coerce.string(),
+});
+
+export const AnalyzeAudioBody = zod.object({
+  durationSec: zod.number(),
+  bpm: zod.number(),
+  keySignature: zod.string().optional(),
+  energy: zod.number(),
+  loudnessDb: zod.number().optional(),
+  beats: zod.array(zod.number()).optional(),
+  segments: zod.array(
+    zod.object({
+      index: zod.number(),
+      startSec: zod.number(),
+      endSec: zod.number(),
+      section: zod.enum([
+        "intro",
+        "verse",
+        "pre_chorus",
+        "chorus",
+        "bridge",
+        "drop",
+        "breakdown",
+        "outro",
+      ]),
+      intensity: zod.number(),
+      emotion: zod.string(),
+      bpm: zod.number().optional(),
+    }),
+  ),
+  emotionalMap: zod.array(
+    zod.object({
+      timeSec: zod.number(),
+      valence: zod.number(),
+      arousal: zod.number(),
+      label: zod.string(),
+    }),
+  ),
 });
 
 export const AnalyzeAudioResponse = zod.object({
@@ -355,6 +392,136 @@ export const GetTimelineResponseItem = zod.object({
   bpm: zod.number().optional(),
 });
 export const GetTimelineResponse = zod.array(GetTimelineResponseItem);
+
+/**
+ * @summary Insert a new timeline segment at a given time
+ */
+export const CreateSegmentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const CreateSegmentBody = zod.object({
+  startSec: zod.number(),
+  endSec: zod.number(),
+  section: zod
+    .enum([
+      "intro",
+      "verse",
+      "pre_chorus",
+      "chorus",
+      "bridge",
+      "drop",
+      "breakdown",
+      "outro",
+    ])
+    .optional(),
+  intensity: zod.number().optional(),
+  emotion: zod.string().optional(),
+});
+
+export const UpdateSegmentParams = zod.object({
+  segmentId: zod.coerce.string(),
+});
+
+export const UpdateSegmentBody = zod.object({
+  startSec: zod.number().optional(),
+  endSec: zod.number().optional(),
+  section: zod
+    .enum([
+      "intro",
+      "verse",
+      "pre_chorus",
+      "chorus",
+      "bridge",
+      "drop",
+      "breakdown",
+      "outro",
+    ])
+    .optional(),
+  intensity: zod.number().optional(),
+  emotion: zod.string().optional(),
+});
+
+export const UpdateSegmentResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  startSec: zod.number(),
+  endSec: zod.number(),
+  section: zod.enum([
+    "intro",
+    "verse",
+    "pre_chorus",
+    "chorus",
+    "bridge",
+    "drop",
+    "breakdown",
+    "outro",
+  ]),
+  intensity: zod.number().describe("0..1"),
+  emotion: zod.string(),
+  bpm: zod.number().optional(),
+});
+export const UpdateSegmentResponse = zod.array(UpdateSegmentResponseItem);
+
+export const DeleteSegmentParams = zod.object({
+  segmentId: zod.coerce.string(),
+});
+
+export const DeleteSegmentResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  startSec: zod.number(),
+  endSec: zod.number(),
+  section: zod.enum([
+    "intro",
+    "verse",
+    "pre_chorus",
+    "chorus",
+    "bridge",
+    "drop",
+    "breakdown",
+    "outro",
+  ]),
+  intensity: zod.number().describe("0..1"),
+  emotion: zod.string(),
+  bpm: zod.number().optional(),
+});
+export const DeleteSegmentResponse = zod.array(DeleteSegmentResponseItem);
+
+/**
+ * @summary Split a segment in two at the given time (defaults to midpoint)
+ */
+export const SplitSegmentParams = zod.object({
+  segmentId: zod.coerce.string(),
+});
+
+export const SplitSegmentBody = zod.object({
+  atSec: zod.number().optional(),
+});
+
+export const SplitSegmentResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  startSec: zod.number(),
+  endSec: zod.number(),
+  section: zod.enum([
+    "intro",
+    "verse",
+    "pre_chorus",
+    "chorus",
+    "bridge",
+    "drop",
+    "breakdown",
+    "outro",
+  ]),
+  intensity: zod.number().describe("0..1"),
+  emotion: zod.string(),
+  bpm: zod.number().optional(),
+});
+export const SplitSegmentResponse = zod.array(SplitSegmentResponseItem);
 
 export const GetStoryboardParams = zod.object({
   id: zod.coerce.string(),

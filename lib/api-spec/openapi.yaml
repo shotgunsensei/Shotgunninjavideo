@@ -172,13 +172,19 @@ paths:
     post:
       operationId: analyzeAudio
       tags: [audio]
-      summary: Run mock audio analysis to populate timeline + emotional map
+      summary: Submit audio analysis (client-computed); falls back to deterministic mock if no body provided
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitAnalysisInput"
       responses:
         "200":
           description: OK
@@ -215,6 +221,104 @@ paths:
           required: true
           schema:
             type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineSegment"
+
+  /projects/{id}/timeline/segments:
+    post:
+      operationId: createSegment
+      tags: [timeline]
+      summary: Insert a new timeline segment at a given time
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSegmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineSegment"
+
+  /timeline-segments/{segmentId}:
+    patch:
+      operationId: updateSegment
+      tags: [timeline]
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSegmentInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineSegment"
+    delete:
+      operationId: deleteSegment
+      tags: [timeline]
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineSegment"
+
+  /timeline-segments/{segmentId}/split:
+    post:
+      operationId: splitSegment
+      tags: [timeline]
+      summary: Split a segment in two at the given time (defaults to midpoint)
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SplitSegmentInput"
       responses:
         "200":
           description: OK
@@ -588,6 +692,69 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/EmotionalPoint"
+
+    SubmitAnalysisInput:
+      type: object
+      required: [durationSec, bpm, energy, segments, emotionalMap]
+      properties:
+        durationSec: { type: number }
+        bpm: { type: number }
+        keySignature: { type: string }
+        energy: { type: number }
+        loudnessDb: { type: number }
+        beats:
+          type: array
+          items: { type: number }
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmitSegmentInput"
+        emotionalMap:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmotionalPoint"
+
+    SubmitSegmentInput:
+      type: object
+      required: [index, startSec, endSec, section, intensity, emotion]
+      properties:
+        index: { type: integer }
+        startSec: { type: number }
+        endSec: { type: number }
+        section:
+          type: string
+          enum: [intro, verse, pre_chorus, chorus, bridge, drop, breakdown, outro]
+        intensity: { type: number }
+        emotion: { type: string }
+        bpm: { type: number }
+
+    CreateSegmentInput:
+      type: object
+      required: [startSec, endSec]
+      properties:
+        startSec: { type: number }
+        endSec: { type: number }
+        section:
+          type: string
+          enum: [intro, verse, pre_chorus, chorus, bridge, drop, breakdown, outro]
+        intensity: { type: number }
+        emotion: { type: string }
+
+    UpdateSegmentInput:
+      type: object
+      properties:
+        startSec: { type: number }
+        endSec: { type: number }
+        section:
+          type: string
+          enum: [intro, verse, pre_chorus, chorus, bridge, drop, breakdown, outro]
+        intensity: { type: number }
+        emotion: { type: string }
+
+    SplitSegmentInput:
+      type: object
+      properties:
+        atSec: { type: number }
 
     EmotionalPoint:
       type: object

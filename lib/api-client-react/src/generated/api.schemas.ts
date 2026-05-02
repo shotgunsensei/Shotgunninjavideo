@@ -165,6 +165,89 @@ export interface UploadAudioInput {
   durationSec?: number;
 }
 
+export type SubmitSegmentInputSection =
+  (typeof SubmitSegmentInputSection)[keyof typeof SubmitSegmentInputSection];
+
+export const SubmitSegmentInputSection = {
+  intro: "intro",
+  verse: "verse",
+  pre_chorus: "pre_chorus",
+  chorus: "chorus",
+  bridge: "bridge",
+  drop: "drop",
+  breakdown: "breakdown",
+  outro: "outro",
+} as const;
+
+export interface SubmitSegmentInput {
+  index: number;
+  startSec: number;
+  endSec: number;
+  section: SubmitSegmentInputSection;
+  intensity: number;
+  emotion: string;
+  bpm?: number;
+}
+
+export interface SubmitAnalysisInput {
+  durationSec: number;
+  bpm: number;
+  keySignature?: string;
+  energy: number;
+  loudnessDb?: number;
+  beats?: number[];
+  segments: SubmitSegmentInput[];
+  emotionalMap: EmotionalPoint[];
+}
+
+export type CreateSegmentInputSection =
+  (typeof CreateSegmentInputSection)[keyof typeof CreateSegmentInputSection];
+
+export const CreateSegmentInputSection = {
+  intro: "intro",
+  verse: "verse",
+  pre_chorus: "pre_chorus",
+  chorus: "chorus",
+  bridge: "bridge",
+  drop: "drop",
+  breakdown: "breakdown",
+  outro: "outro",
+} as const;
+
+export interface CreateSegmentInput {
+  startSec: number;
+  endSec: number;
+  section?: CreateSegmentInputSection;
+  intensity?: number;
+  emotion?: string;
+}
+
+export type UpdateSegmentInputSection =
+  (typeof UpdateSegmentInputSection)[keyof typeof UpdateSegmentInputSection];
+
+export const UpdateSegmentInputSection = {
+  intro: "intro",
+  verse: "verse",
+  pre_chorus: "pre_chorus",
+  chorus: "chorus",
+  bridge: "bridge",
+  drop: "drop",
+  breakdown: "breakdown",
+  outro: "outro",
+} as const;
+
+export interface UpdateSegmentInput {
+  startSec?: number;
+  endSec?: number;
+  section?: UpdateSegmentInputSection;
+  intensity?: number;
+  emotion?: string;
+}
+
+export interface SplitSegmentInput {
+  atSec?: number;
+}
+
 export interface StoryboardScene {
   id: string;
   projectId: string;

@@ -7,8 +7,9 @@ import {
   analysisTable,
   timelineSegmentsTable,
   activityTable,
+  type InsertTimelineSegment,
 } from "@workspace/db";
-import { UploadAudioBody } from "@workspace/api-zod";
+import { UploadAudioBody, AnalyzeAudioBody } from "@workspace/api-zod";
 import { buildMockAnalysis } from "../lib/mockAnalysis";
 
 const router: IRouter = Router();
@@ -55,32 +56,72 @@ router.post("/projects/:id/analyze", async (req, res) => {
     return;
   }
   const [audio] = await db.select().from(audioFilesTable).where(eq(audioFilesTable.projectId, id));
-  const duration = audio?.durationSec ?? project.durationSec ?? 180;
-  const analysis = buildMockAnalysis(id, duration, project.bpm ?? undefined);
 
-  await db.delete(analysisTable).where(eq(analysisTable.projectId, id));
+  // If body provided, use real client-side analysis. Otherwise, fallback to deterministic mock.
+  let bpm: number;
+  let keySignature: string;
+  let energy: number;
+  let loudnessDb: number | null;
+  let duration: number;
+  let emotionalMap: { timeSec: number; valence: number; arousal: number; label: string }[];
+  let segmentInputs: Omit<InsertTimelineSegment, "id">[];
+  let source: "client" | "mock";
+
+  const hasBody = req.body && Object.keys(req.body).length > 0;
+  if (hasBody) {
+    const submitted = AnalyzeAudioBody.parse(req.body);
+    duration = submitted.durationSec;
+    bpm = Math.round(submitted.bpm);
+    keySignature = submitted.keySignature ?? "—";
+    energy = Math.max(0, Math.min(1, submitted.energy));
+    loudnessDb = submitted.loudnessDb ?? null;
+    emotionalMap = submitted.emotionalMap;
+    segmentInputs = submitted.segments.map((s, i) => ({
+      projectId: id,
+      index: i,
+      startSec: s.startSec,
+      endSec: s.endSec,
+      section: s.section,
+      intensity: Math.max(0, Math.min(1, s.intensity)),
+      emotion: s.emotion,
+      bpm: s.bpm ?? bpm,
+    }));
+    source = "client";
+  } else {
+    duration = audio?.durationSec ?? project.durationSec ?? 180;
+    const analysis = buildMockAnalysis(id, duration, project.bpm ?? undefined);
+    bpm = analysis.bpm;
+    keySignature = analysis.keySignature;
+    energy = analysis.energy;
+    loudnessDb = analysis.loudnessDb;
+    emotionalMap = analysis.emotionalMap;
+    segmentInputs = analysis.segments;
+    source = "mock";
+  }
+
   await db.delete(timelineSegmentsTable).where(eq(timelineSegmentsTable.projectId, id));
+  await db.delete(analysisTable).where(eq(analysisTable.projectId, id));
 
   await db.insert(analysisTable).values({
     projectId: id,
     durationSec: duration,
-    bpm: analysis.bpm,
-    keySignature: analysis.keySignature,
-    energy: analysis.energy,
-    loudnessDb: analysis.loudnessDb,
-    emotionalMap: analysis.emotionalMap,
+    bpm,
+    keySignature,
+    energy,
+    loudnessDb,
+    emotionalMap,
   });
   const insertedSegs = await db
     .insert(timelineSegmentsTable)
-    .values(analysis.segments)
+    .values(segmentInputs)
     .returning();
 
   await db
     .update(projectsTable)
     .set({
       status: "analyzed",
-      bpm: analysis.bpm,
-      keySignature: analysis.keySignature,
+      bpm,
+      keySignature,
       durationSec: duration,
       updatedAt: new Date(),
     })
@@ -89,18 +130,21 @@ router.post("/projects/:id/analyze", async (req, res) => {
   await db.insert(activityTable).values({
     projectId: id,
     kind: "analyzed",
-    message: `Analyzed audio — ${analysis.bpm} BPM, ${analysis.keySignature}`,
+    message:
+      source === "client"
+        ? `Decoded audio — ${bpm} BPM, ${insertedSegs.length} segments detected`
+        : `Mock-analyzed audio — ${bpm} BPM, ${keySignature}`,
   });
 
   res.json({
     projectId: id,
     durationSec: duration,
-    bpm: analysis.bpm,
-    keySignature: analysis.keySignature,
-    energy: analysis.energy,
-    loudnessDb: analysis.loudnessDb,
+    bpm,
+    keySignature,
+    energy,
+    loudnessDb: loudnessDb ?? undefined,
     segments: insertedSegs,
-    emotionalMap: analysis.emotionalMap,
+    emotionalMap,
   });
 });
 
