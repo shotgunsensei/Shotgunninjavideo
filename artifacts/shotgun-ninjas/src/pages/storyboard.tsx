@@ -32,6 +32,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/EmptyState";
+import { StickyMobileBar } from "@/components/StickyMobileBar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -306,17 +308,22 @@ export default function Storyboard() {
 
   if (!enabledForFetch) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 border border-dashed border-border/50 bg-card/10 text-center p-6 max-w-2xl mx-auto mt-12">
-        <Clapperboard className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-        <h3 className="text-lg font-medium mb-2 uppercase tracking-wider">Analysis Required</h3>
-        <p className="text-sm text-muted-foreground font-mono mb-4">
-          Run acoustic analysis before generating storyboard.
-        </p>
-        <Button asChild className="rounded-none uppercase tracking-widest">
-          <Link href={`/projects/${projectId}/analysis`}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Go to Analysis
-          </Link>
-        </Button>
+      <div className="max-w-2xl mx-auto mt-12">
+        <EmptyState
+          icon={Clapperboard}
+          title="Analysis Required"
+          description="Run acoustic analysis before generating a storyboard. Beat and emotional segmentation power scene timing."
+          action={
+            <Button
+              asChild
+              className="rounded-none uppercase tracking-widest font-bold bg-gradient-crimson border border-primary/60 text-primary-foreground shadow-glow-soft"
+            >
+              <Link href={`/projects/${projectId}/analysis`}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Go to Analysis
+              </Link>
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -330,14 +337,22 @@ export default function Storyboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-24">
+    <div className="space-y-6 max-w-7xl mx-auto pb-32 md:pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-border/50 pb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Film className="w-7 h-7 text-primary" />
-            <h1 className="text-3xl font-bold tracking-tighter uppercase">Storyboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-border/40 pb-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary/80">
+              Director's Cut
+            </span>
           </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter uppercase flex items-center gap-3">
+            <span className="inline-flex items-center justify-center w-10 h-10 border border-primary/30 bg-gradient-crimson-soft">
+              <Film className="w-5 h-5 text-primary" />
+            </span>
+            Storyboard
+          </h1>
           <p className="text-muted-foreground font-mono text-xs uppercase tracking-widest">
             {project?.title}
             {project?.artist ? ` — ${project.artist}` : ""} ·{" "}
@@ -359,17 +374,18 @@ export default function Storyboard() {
             <Button
               asChild
               variant="ghost"
-              className="rounded-none uppercase tracking-widest text-xs h-9"
+              className="rounded-none uppercase tracking-widest text-xs h-9 hover:text-accent"
             >
-              <Link href={`/projects/${projectId}/export`}>Export</Link>
+              <Link href={`/projects/${projectId}/export`}>Export →</Link>
             </Button>
           )}
         </div>
       </div>
 
       {/* Direction bar */}
-      <div className="border border-border/60 bg-card/30 backdrop-blur-sm">
-        <div className="p-5 sm:p-6 space-y-5">
+      <div className="border border-border/60 surface-card relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-60 bg-[radial-gradient(circle_at_0%_0%,hsl(320_100%_50%/0.08),transparent_55%)]" />
+        <div className="relative p-5 sm:p-6 space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Wand2 className="w-4 h-4 text-primary" />
@@ -488,15 +504,11 @@ export default function Storyboard() {
 
       {/* Empty state */}
       {!hasScenes && !isLoading && (
-        <div className="flex flex-col items-center justify-center min-h-[320px] border border-dashed border-border/50 bg-card/10 text-center p-12">
-          <Clapperboard className="w-14 h-14 text-muted-foreground mb-6 opacity-40" />
-          <h3 className="text-2xl font-bold mb-3 uppercase tracking-widest">Director's Cut</h3>
-          <p className="text-sm text-muted-foreground font-mono mb-4 max-w-lg leading-relaxed">
-            Pick a visual style above, add your brand direction, and generate a beat-synced storyboard.
-            Scenes inherit your timeline structure and emotional arc — you can lock, edit, duplicate, or
-            regenerate any scene afterward.
-          </p>
-        </div>
+        <EmptyState
+          icon={Clapperboard}
+          title="Ready for the director's cut"
+          description="Pick a visual style above, add your brand direction, and generate a beat-synced storyboard. Scenes inherit your timeline structure and emotional arc — lock, edit, duplicate, or regenerate any scene afterward."
+        />
       )}
 
       {/* Scene list */}
@@ -509,10 +521,13 @@ export default function Storyboard() {
             return (
               <div key={scene.id}>
                 <Card
-                  className={`rounded-none border-border/60 bg-card/30 overflow-hidden transition-colors ${scene.locked ? "border-l-4 border-l-amber-500/80" : "border-l-4 border-l-primary/40"}`}
+                  className={`rounded-none border-border/60 surface-card overflow-hidden transition-all hover-lift relative group/card ${scene.locked ? "border-l-4 border-l-amber-500/80" : "border-l-4 border-l-primary/50 hover:border-l-primary"}`}
+                  data-testid={`scene-card-${scene.id}`}
                 >
+                  {/* Subtle ambient gradient on hover */}
+                  <div className="absolute inset-0 pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity bg-[radial-gradient(circle_at_100%_0%,hsl(320_100%_50%/0.06),transparent_60%)]" />
                   {/* Card header */}
-                  <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 bg-black/40 border-b border-border/50">
+                  <div className="relative flex items-center justify-between gap-3 px-4 sm:px-5 py-3 bg-black/50 border-b border-border/50">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="font-mono text-[10px] text-primary font-bold uppercase tracking-widest shrink-0">
                         Plot {String(scene.index + 1).padStart(3, "0")}
@@ -608,7 +623,7 @@ export default function Storyboard() {
                   </div>
 
                   {/* Card body */}
-                  <div className="p-4 sm:p-5 space-y-4">
+                  <div className="relative p-4 sm:p-5 space-y-4">
                     <div>
                       <h3 className="text-lg font-bold uppercase tracking-wider leading-tight mb-2">
                         {scene.title}
@@ -648,12 +663,12 @@ export default function Storyboard() {
                         <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground shrink-0">
                           Palette
                         </span>
-                        <div className="flex gap-1 flex-1 h-5 overflow-hidden border border-border/40">
+                        <div className="flex gap-0 flex-1 h-6 overflow-hidden border border-border/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]">
                           {swatches.map((c, i) => (
                             <div
                               key={i}
-                              className="flex-1 h-full"
-                              style={{ backgroundColor: c }}
+                              className="flex-1 h-full transition-transform hover:scale-y-110"
+                              style={{ backgroundColor: c, boxShadow: `inset 0 0 0 1px ${c}` }}
                               title={c}
                             />
                           ))}
@@ -816,6 +831,30 @@ export default function Storyboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sticky mobile generate button */}
+      <StickyMobileBar>
+        <Button
+          onClick={() => handleGenerate(false)}
+          disabled={generate.isPending}
+          className="w-full rounded-none uppercase tracking-widest font-bold bg-gradient-crimson border border-primary/60 text-primary-foreground shadow-glow-soft h-11"
+          data-testid="mobile-generate-storyboard"
+        >
+          {generate.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Drafting Scenes…
+            </>
+          ) : hasScenes ? (
+            <>
+              <RefreshCw className="w-4 h-4 mr-2" /> Regenerate Storyboard
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4 mr-2 fill-current" /> Generate Storyboard
+            </>
+          )}
+        </Button>
+      </StickyMobileBar>
     </div>
   );
 }

@@ -27,17 +27,32 @@ export function Layout({ children }: { children: ReactNode }) {
         <Sidebar />
       </div>
       <main className="flex-1 overflow-y-auto relative">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background" />
+        {/* Ambient glows — sit above body bg, behind content */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden
+        >
+          <div className="absolute -top-32 -right-24 w-[40rem] h-[40rem] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute top-1/3 -left-32 w-[28rem] h-[28rem] rounded-full bg-secondary/15 blur-[140px]" />
+          <div className="absolute -bottom-32 right-1/4 w-[32rem] h-[32rem] rounded-full bg-accent/8 blur-[140px]" />
+        </div>
 
         {/* Mobile top bar */}
-        <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/90 backdrop-blur px-4 h-14">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Clapperboard className="w-5 h-5 text-primary" />
+        <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/85 backdrop-blur-md px-4 h-14">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <span className="inline-flex items-center justify-center w-7 h-7 border border-primary/40 bg-gradient-crimson-soft">
+              <Clapperboard className="w-4 h-4 text-primary group-hover:text-accent transition-colors" />
+            </span>
             <span className="font-bold tracking-widest uppercase text-xs">Shotgun Ninjas</span>
           </Link>
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-none border border-border/40">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-none border border-border/40"
+                data-testid="open-mobile-nav"
+              >
                 <Menu className="w-4 h-4" />
                 <span className="sr-only">Open navigation</span>
               </Button>

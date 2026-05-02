@@ -14,6 +14,24 @@ The project is built as a monorepo using `pnpm workspaces`.
 
 The frontend is a React application built with Vite, utilizing Tailwind CSS v4 for styling, shadcn/ui for UI components, `wouter` for routing, TanStack Query for data fetching, `framer-motion` for animations, and `recharts` for data visualization. The main user-facing application is located at `artifacts/shotgun-ninjas`. There is also a design canvas at `artifacts/mockup-sandbox`.
 
+### Design system
+
+Premium dark "creator lab" aesthetic — pure black background with ambient crimson (HSL 320 100/50), purple (HSL 280 100/25), and pink-accent (HSL 340 100/50) radial gradients fixed to the viewport. Typography uses Space Grotesk (display) + JetBrains Mono (mono) with tight tracking on headings and uppercase tracking-widest on micro-copy. Custom utilities live in `artifacts/shotgun-ninjas/src/index.css`:
+
+- **Gradients**: `bg-gradient-crimson`, `bg-gradient-crimson-soft`, `text-gradient-crimson`
+- **Glows**: `shadow-glow-primary` / `accent` / `purple` / `soft`
+- **Surfaces**: `surface-card` (semi-transparent layered card over body gradients)
+- **Animations**: `animate-pulse-glow`, `animate-shimmer`, `ring-gradient-pulse` (conic spin), `hover-lift`
+
+Shared layout components live in `artifacts/shotgun-ninjas/src/components/`:
+
+- `PageHeader` — eyebrow + icon + title + subtitle + actions
+- `EmptyState` — illustrated empty state with optional CTA
+- `ProjectCompletionMeter` — animated progress bar + step pills (used on project hub)
+- `StickyMobileBar` — fixed bottom-of-screen action bar for mobile (used on storyboard, export)
+
+The sidebar uses `NavSection` + `NavItem` primitives with a left rail glow on the active item, accent dividers, and a brand mark with gradient. Dashboard, project hub, storyboard, export, and pricing all use these shared primitives, so any further visual polish should flow through `index.css` utilities and the shared components rather than inline overrides.
+
 ## Backend
 
 The API server is built with Express 5 and located at `artifacts/api-server`. It powers all application features.
