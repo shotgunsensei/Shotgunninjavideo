@@ -610,3 +610,97 @@ export interface UpdateSettingsInput {
   creatorName?: string;
   creatorHandle?: string;
 }
+
+export type PlanId = (typeof PlanId)[keyof typeof PlanId];
+
+export const PlanId = {
+  free: "free",
+  creator: "creator",
+  studio: "studio",
+  agency: "agency",
+} as const;
+
+export type SubscriptionStatus =
+  (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
+
+export const SubscriptionStatus = {
+  active: "active",
+  trialing: "trialing",
+  past_due: "past_due",
+  cancelled: "cancelled",
+} as const;
+
+export type PlanFeature = (typeof PlanFeature)[keyof typeof PlanFeature];
+
+export const PlanFeature = {
+  unlimited_projects: "unlimited_projects",
+  advanced_storyboard: "advanced_storyboard",
+  platform_prompt_packs: "platform_prompt_packs",
+  json_export: "json_export",
+  csv_export: "csv_export",
+  lyrics_alignment: "lyrics_alignment",
+  batch_projects: "batch_projects",
+  brand_continuity_lock: "brand_continuity_lock",
+  treatment_export: "treatment_export",
+  social_captions: "social_captions",
+  advanced_editing_guides: "advanced_editing_guides",
+  team_workspace: "team_workspace",
+  white_label_exports: "white_label_exports",
+  client_folders: "client_folders",
+  brand_presets: "brand_presets",
+  priority_render: "priority_render",
+} as const;
+
+export type PlanCatalogItemPriceInterval =
+  (typeof PlanCatalogItemPriceInterval)[keyof typeof PlanCatalogItemPriceInterval];
+
+export const PlanCatalogItemPriceInterval = {
+  month: "month",
+  year: "year",
+  free: "free",
+} as const;
+
+export interface PlanCatalogItem {
+  id: PlanId;
+  name: string;
+  tagline: string;
+  priceCents: number;
+  priceInterval: PlanCatalogItemPriceInterval;
+  /** null = unlimited */
+  projectLimit?: number | null;
+  features: PlanFeature[];
+  highlights: string[];
+  ctaLabel: string;
+  /** Reserved for future Stripe wiring; null in mock mode. */
+  stripePriceId?: string | null;
+}
+
+export interface BillingUsage {
+  projectCount: number;
+  projectLimit?: number | null;
+}
+
+export type BillingStateProviderName =
+  (typeof BillingStateProviderName)[keyof typeof BillingStateProviderName];
+
+export const BillingStateProviderName = {
+  mock: "mock",
+  stripe: "stripe",
+} as const;
+
+export interface BillingState {
+  plan: PlanId;
+  status: SubscriptionStatus;
+  planMeta: PlanCatalogItem;
+  features: PlanFeature[];
+  usage: BillingUsage;
+  providerName: BillingStateProviderName;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd: boolean;
+  updatedAt: string;
+}
+
+export interface UpgradePlanInput {
+  plan: PlanId;
+}

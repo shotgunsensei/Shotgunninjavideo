@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -15,7 +15,10 @@ import {
   Film,
   ScrollText,
   Megaphone,
+  Lock,
 } from "lucide-react";
+import { PLAN_CATALOG } from "@workspace/billing";
+import { useBilling } from "@/hooks/use-billing";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -152,6 +155,7 @@ export default function ExportPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<ExportFormat | null>(null);
+  const billing = useBilling();
 
   const { data: project } = useGetProject(projectId, {
     query: { enabled: !!projectId, queryKey: getGetProjectQueryKey(projectId) },
@@ -238,12 +242,24 @@ export default function ExportPage() {
         {FORMAT_CARDS.map((card) => {
           const Icon = card.icon;
           const isPending = pending === card.format && createExport.isPending;
+          const allowed = billing.isExportAllowed(card.format);
+          const requiredPlan = allowed
+            ? null
+            : billing.requiredPlanForExportFormat(card.format);
           return (
             <Card
               key={card.format}
               data-testid={`export-card-${card.format}`}
-              className={`rounded-none transition-colors group ${ACCENT_CLASSES[card.accent]}`}
+              className={`rounded-none transition-colors group relative ${
+                allowed ? ACCENT_CLASSES[card.accent] : "border-border/40 bg-card/10 opacity-90"
+              }`}
             >
+              {!allowed && (
+                <div className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-mono uppercase tracking-widest">
+                  <Lock className="w-3 h-3" />
+                  {requiredPlan ? PLAN_CATALOG[requiredPlan].name : "Upgrade"}
+                </div>
+              )}
               <CardHeader>
                 <CardTitle className="uppercase tracking-widest text-sm flex items-center gap-2">
                   <Icon className="w-4 h-4 shrink-0" />
@@ -254,24 +270,40 @@ export default function ExportPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  className="w-full rounded-none uppercase tracking-widest text-xs font-bold"
-                  onClick={() => handleGenerate(card)}
-                  disabled={createExport.isPending}
-                  data-testid={`button-generate-${card.format}`}
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                      Generating…
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-3 h-3 mr-2" />
-                      Generate &amp; Download
-                    </>
-                  )}
-                </Button>
+                {allowed ? (
+                  <Button
+                    className="w-full rounded-none uppercase tracking-widest text-xs font-bold"
+                    onClick={() => handleGenerate(card)}
+                    disabled={createExport.isPending}
+                    data-testid={`button-generate-${card.format}`}
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3 h-3 mr-2" />
+                        Generate &amp; Download
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Link
+                    href="/pricing"
+                    data-testid={`button-upgrade-${card.format}`}
+                    className="block"
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-none uppercase tracking-widest text-xs font-bold border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/10 hover:text-yellow-200"
+                    >
+                      <Lock className="w-3 h-3 mr-2" />
+                      Upgrade to {requiredPlan ? PLAN_CATALOG[requiredPlan].name : "unlock"}
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           );

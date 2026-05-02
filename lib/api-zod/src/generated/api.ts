@@ -1135,3 +1135,259 @@ export const UpdateSettingsResponse = zod.object({
   creatorName: zod.string().optional(),
   creatorHandle: zod.string().optional(),
 });
+
+/**
+ * @summary List the static plan catalog
+ */
+export const ListBillingPlansResponseItem = zod.object({
+  id: zod.enum(["free", "creator", "studio", "agency"]),
+  name: zod.string(),
+  tagline: zod.string(),
+  priceCents: zod.number(),
+  priceInterval: zod.enum(["month", "year", "free"]),
+  projectLimit: zod.number().nullish().describe("null = unlimited"),
+  features: zod.array(
+    zod.enum([
+      "unlimited_projects",
+      "advanced_storyboard",
+      "platform_prompt_packs",
+      "json_export",
+      "csv_export",
+      "lyrics_alignment",
+      "batch_projects",
+      "brand_continuity_lock",
+      "treatment_export",
+      "social_captions",
+      "advanced_editing_guides",
+      "team_workspace",
+      "white_label_exports",
+      "client_folders",
+      "brand_presets",
+      "priority_render",
+    ]),
+  ),
+  highlights: zod.array(zod.string()),
+  ctaLabel: zod.string(),
+  stripePriceId: zod
+    .string()
+    .nullish()
+    .describe("Reserved for future Stripe wiring; null in mock mode."),
+});
+export const ListBillingPlansResponse = zod.array(ListBillingPlansResponseItem);
+
+/**
+ * @summary Get the current subscription state with usage and feature flags
+ */
+export const GetBillingStateResponse = zod.object({
+  plan: zod.enum(["free", "creator", "studio", "agency"]),
+  status: zod.enum(["active", "trialing", "past_due", "cancelled"]),
+  planMeta: zod.object({
+    id: zod.enum(["free", "creator", "studio", "agency"]),
+    name: zod.string(),
+    tagline: zod.string(),
+    priceCents: zod.number(),
+    priceInterval: zod.enum(["month", "year", "free"]),
+    projectLimit: zod.number().nullish().describe("null = unlimited"),
+    features: zod.array(
+      zod.enum([
+        "unlimited_projects",
+        "advanced_storyboard",
+        "platform_prompt_packs",
+        "json_export",
+        "csv_export",
+        "lyrics_alignment",
+        "batch_projects",
+        "brand_continuity_lock",
+        "treatment_export",
+        "social_captions",
+        "advanced_editing_guides",
+        "team_workspace",
+        "white_label_exports",
+        "client_folders",
+        "brand_presets",
+        "priority_render",
+      ]),
+    ),
+    highlights: zod.array(zod.string()),
+    ctaLabel: zod.string(),
+    stripePriceId: zod
+      .string()
+      .nullish()
+      .describe("Reserved for future Stripe wiring; null in mock mode."),
+  }),
+  features: zod.array(
+    zod.enum([
+      "unlimited_projects",
+      "advanced_storyboard",
+      "platform_prompt_packs",
+      "json_export",
+      "csv_export",
+      "lyrics_alignment",
+      "batch_projects",
+      "brand_continuity_lock",
+      "treatment_export",
+      "social_captions",
+      "advanced_editing_guides",
+      "team_workspace",
+      "white_label_exports",
+      "client_folders",
+      "brand_presets",
+      "priority_render",
+    ]),
+  ),
+  usage: zod.object({
+    projectCount: zod.number(),
+    projectLimit: zod.number().nullish(),
+  }),
+  providerName: zod.enum(["mock", "stripe"]),
+  currentPeriodStart: zod.coerce.date().nullish(),
+  currentPeriodEnd: zod.coerce.date().nullish(),
+  cancelAtPeriodEnd: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Upgrade or switch the current plan (mock — no Stripe yet)
+ */
+export const UpgradeBillingPlanBody = zod.object({
+  plan: zod.enum(["free", "creator", "studio", "agency"]),
+});
+
+export const UpgradeBillingPlanResponse = zod.object({
+  plan: zod.enum(["free", "creator", "studio", "agency"]),
+  status: zod.enum(["active", "trialing", "past_due", "cancelled"]),
+  planMeta: zod.object({
+    id: zod.enum(["free", "creator", "studio", "agency"]),
+    name: zod.string(),
+    tagline: zod.string(),
+    priceCents: zod.number(),
+    priceInterval: zod.enum(["month", "year", "free"]),
+    projectLimit: zod.number().nullish().describe("null = unlimited"),
+    features: zod.array(
+      zod.enum([
+        "unlimited_projects",
+        "advanced_storyboard",
+        "platform_prompt_packs",
+        "json_export",
+        "csv_export",
+        "lyrics_alignment",
+        "batch_projects",
+        "brand_continuity_lock",
+        "treatment_export",
+        "social_captions",
+        "advanced_editing_guides",
+        "team_workspace",
+        "white_label_exports",
+        "client_folders",
+        "brand_presets",
+        "priority_render",
+      ]),
+    ),
+    highlights: zod.array(zod.string()),
+    ctaLabel: zod.string(),
+    stripePriceId: zod
+      .string()
+      .nullish()
+      .describe("Reserved for future Stripe wiring; null in mock mode."),
+  }),
+  features: zod.array(
+    zod.enum([
+      "unlimited_projects",
+      "advanced_storyboard",
+      "platform_prompt_packs",
+      "json_export",
+      "csv_export",
+      "lyrics_alignment",
+      "batch_projects",
+      "brand_continuity_lock",
+      "treatment_export",
+      "social_captions",
+      "advanced_editing_guides",
+      "team_workspace",
+      "white_label_exports",
+      "client_folders",
+      "brand_presets",
+      "priority_render",
+    ]),
+  ),
+  usage: zod.object({
+    projectCount: zod.number(),
+    projectLimit: zod.number().nullish(),
+  }),
+  providerName: zod.enum(["mock", "stripe"]),
+  currentPeriodStart: zod.coerce.date().nullish(),
+  currentPeriodEnd: zod.coerce.date().nullish(),
+  cancelAtPeriodEnd: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Cancel the current plan and revert to Free (mock)
+ */
+export const CancelBillingPlanResponse = zod.object({
+  plan: zod.enum(["free", "creator", "studio", "agency"]),
+  status: zod.enum(["active", "trialing", "past_due", "cancelled"]),
+  planMeta: zod.object({
+    id: zod.enum(["free", "creator", "studio", "agency"]),
+    name: zod.string(),
+    tagline: zod.string(),
+    priceCents: zod.number(),
+    priceInterval: zod.enum(["month", "year", "free"]),
+    projectLimit: zod.number().nullish().describe("null = unlimited"),
+    features: zod.array(
+      zod.enum([
+        "unlimited_projects",
+        "advanced_storyboard",
+        "platform_prompt_packs",
+        "json_export",
+        "csv_export",
+        "lyrics_alignment",
+        "batch_projects",
+        "brand_continuity_lock",
+        "treatment_export",
+        "social_captions",
+        "advanced_editing_guides",
+        "team_workspace",
+        "white_label_exports",
+        "client_folders",
+        "brand_presets",
+        "priority_render",
+      ]),
+    ),
+    highlights: zod.array(zod.string()),
+    ctaLabel: zod.string(),
+    stripePriceId: zod
+      .string()
+      .nullish()
+      .describe("Reserved for future Stripe wiring; null in mock mode."),
+  }),
+  features: zod.array(
+    zod.enum([
+      "unlimited_projects",
+      "advanced_storyboard",
+      "platform_prompt_packs",
+      "json_export",
+      "csv_export",
+      "lyrics_alignment",
+      "batch_projects",
+      "brand_continuity_lock",
+      "treatment_export",
+      "social_captions",
+      "advanced_editing_guides",
+      "team_workspace",
+      "white_label_exports",
+      "client_folders",
+      "brand_presets",
+      "priority_render",
+    ]),
+  ),
+  usage: zod.object({
+    projectCount: zod.number(),
+    projectLimit: zod.number().nullish(),
+  }),
+  providerName: zod.enum(["mock", "stripe"]),
+  currentPeriodStart: zod.coerce.date().nullish(),
+  currentPeriodEnd: zod.coerce.date().nullish(),
+  cancelAtPeriodEnd: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});

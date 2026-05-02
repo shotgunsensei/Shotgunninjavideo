@@ -12,9 +12,11 @@ import {
   Mic2,
   Wand2,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
+import { PlanBadge } from "./PlanBadge";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -31,6 +33,7 @@ export function Sidebar() {
   const mainLinks = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/projects/new", label: "New Project", icon: PlusSquare },
+    { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -102,8 +105,11 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="p-4 border-t border-border/50 text-xs text-center text-muted-foreground font-mono">
-        v0.1.0 // ONLINE
+      <div className="p-4 border-t border-border/50 space-y-3">
+        <PlanBadge />
+        <div className="text-xs text-center text-muted-foreground font-mono">
+          v0.1.0 // ONLINE
+        </div>
       </div>
     </aside>
   );

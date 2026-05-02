@@ -63,6 +63,16 @@ Two demo projects are seeded idempotently on every server start (`artifacts/api-
 
 Each demo seed checks for its own title before inserting, so the seeder is safe to run on every boot and can add new built-in templates without disturbing existing ones.
 
+## Billing / Monetization (demo mode)
+
+Plan tiers live in **`lib/billing`** (`PLAN_CATALOG`, `EXPORT_FORMAT_GATE`, helpers). Four plans: **Free** (2 projects, basic exports), **Creator Pro** ($9.99/mo, JSON/CSV/AI prompt pack), **Studio Pro** ($29/mo, every export + brand continuity), **Agency** ($79/mo, white-label, team seats).
+
+- **DB**: `lib/db/src/schema/billing.ts` — single-row table (`id=1`) with `plan`, `status`, stub `stripeCustomerId`/`stripeSubscriptionId`/period fields.
+- **API**: `GET /api/billing/plans`, `GET /api/billing`, `POST /api/billing/upgrade`, `POST /api/billing/cancel` (`artifacts/api-server/src/routes/billing.ts`).
+- **Provider abstraction**: `artifacts/api-server/src/lib/billingProvider.ts` exposes a `BillingProvider` interface implemented by `MockBillingProvider` (in-DB demo state). `getBillingProvider()` reads `BILLING_PROVIDER` env. To wire Stripe later: implement `StripeBillingProvider`, swap that single import, add `stripePriceId` to each plan in `lib/billing/src/index.ts`. No route or UI changes needed.
+- **Server gates**: `POST /api/projects` returns **402 `plan_limit_reached`** when Free hits its project limit. `POST /api/projects/:id/exports` returns **402 `feature_not_available`** for export formats not unlocked by the current plan.
+- **Frontend**: `useBilling()` hook (`hooks/use-billing.ts`) for plan + gate checks. `<PlanBadge />` in the sidebar footer (links to `/pricing`). `pages/pricing.tsx` shows the four-tier comparison with one-click mock upgrade/cancel. Gated export cards in `pages/export.tsx` swap their CTA to a yellow "Upgrade to {Plan}" link to `/pricing`. The New Project page surfaces a yellow plan-limit banner + disabled submit button when at the Free cap.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages

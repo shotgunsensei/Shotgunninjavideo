@@ -12,6 +12,8 @@ import {
   timelineSegmentsTable,
 } from "@workspace/db";
 import { CreateProjectBody, UpdateProjectBody } from "@workspace/api-zod";
+import { isWithinProjectLimit, PLAN_CATALOG, requiredPlanForFeature } from "@workspace/billing";
+import { getBillingProvider, getProjectCount } from "../lib/billingProvider";
 
 const router: IRouter = Router();
 
@@ -57,6 +59,25 @@ router.get("/projects", async (_req, res) => {
 
 router.post("/projects", async (req, res) => {
   const body = CreateProjectBody.parse(req.body);
+
+  // Plan-limit gate. Free plans cap project count; paid plans are unlimited.
+  const [billing, count] = await Promise.all([
+    getBillingProvider().getCurrent(),
+    getProjectCount(),
+  ]);
+  if (!isWithinProjectLimit(billing.plan, count)) {
+    const limit = PLAN_CATALOG[billing.plan].projectLimit;
+    res.status(402).json({
+      error: "plan_limit_reached",
+      message: `Your ${PLAN_CATALOG[billing.plan].name} plan is limited to ${limit} projects. Upgrade to create more.`,
+      currentPlan: billing.plan,
+      requiredPlan: requiredPlanForFeature("unlimited_projects"),
+      projectCount: count,
+      projectLimit: limit,
+    });
+    return;
+  }
+
   const coverColor = COVER_COLORS[Math.floor(Math.random() * COVER_COLORS.length)] ?? "#FF1B6B";
   const [created] = await db
     .insert(projectsTable)

@@ -19,6 +19,13 @@ import {
   FORMAT_META,
   type ExportFormat,
 } from "../lib/exporters";
+import {
+  EXPORT_FORMAT_GATE,
+  isExportFormatAllowed,
+  PLAN_CATALOG,
+  requiredPlanForExportFormat,
+} from "@workspace/billing";
+import { getBillingProvider } from "../lib/billingProvider";
 
 const router: IRouter = Router();
 
@@ -50,6 +57,21 @@ router.post("/projects/:id/exports", async (req, res) => {
   const id = req.params.id;
   const body = CreateExportBody.parse(req.body);
   const format = body.format as ExportFormat;
+
+  // Plan gate: each export format maps to a Feature in the billing catalog.
+  const billing = await getBillingProvider().getCurrent();
+  if (!isExportFormatAllowed(billing.plan, format)) {
+    const required = requiredPlanForExportFormat(format);
+    const requiredFeature = EXPORT_FORMAT_GATE[format];
+    res.status(402).json({
+      error: "feature_not_available",
+      message: `The "${format}" export requires the ${PLAN_CATALOG[required].name} plan or higher.`,
+      currentPlan: billing.plan,
+      requiredPlan: required,
+      requiredFeature,
+    });
+    return;
+  }
 
   const [project] = await db
     .select()

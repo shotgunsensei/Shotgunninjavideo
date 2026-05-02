@@ -11,6 +11,7 @@ import promptEngineRouter from "./promptEngine";
 import exportsRouter from "./exports";
 import settingsRouter from "./settings";
 import statsRouter from "./stats";
+import billingRouter from "./billing";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(promptsRouter);
 router.use(promptEngineRouter);
 router.use(exportsRouter);
 router.use(settingsRouter);
+router.use(billingRouter);
 
 export default router;

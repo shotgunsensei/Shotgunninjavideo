@@ -18,6 +18,7 @@ tags:
   - name: exports
   - name: settings
   - name: stats
+  - name: billing
 paths:
   /healthz:
     get:
@@ -826,6 +827,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/Settings"
 
+  /billing/plans:
+    get:
+      operationId: listBillingPlans
+      tags: [billing]
+      summary: List the static plan catalog
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanCatalogItem"
+
+  /billing:
+    get:
+      operationId: getBillingState
+      tags: [billing]
+      summary: Get the current subscription state with usage and feature flags
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingState"
+
+  /billing/upgrade:
+    post:
+      operationId: upgradeBillingPlan
+      tags: [billing]
+      summary: Upgrade or switch the current plan (mock — no Stripe yet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpgradePlanInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingState"
+
+  /billing/cancel:
+    post:
+      operationId: cancelBillingPlan
+      tags: [billing]
+      summary: Cancel the current plan and revert to Free (mock)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingState"
+
 components:
   schemas:
     HealthStatus:
@@ -1527,3 +1588,115 @@ components:
           enum: [dark, light]
         creatorName: { type: string }
         creatorHandle: { type: string }
+
+    PlanId:
+      type: string
+      enum: [free, creator, studio, agency]
+
+    SubscriptionStatus:
+      type: string
+      enum: [active, trialing, past_due, cancelled]
+
+    PlanFeature:
+      type: string
+      enum:
+        - unlimited_projects
+        - advanced_storyboard
+        - platform_prompt_packs
+        - json_export
+        - csv_export
+        - lyrics_alignment
+        - batch_projects
+        - brand_continuity_lock
+        - treatment_export
+        - social_captions
+        - advanced_editing_guides
+        - team_workspace
+        - white_label_exports
+        - client_folders
+        - brand_presets
+        - priority_render
+
+    PlanCatalogItem:
+      type: object
+      required:
+        - id
+        - name
+        - tagline
+        - priceCents
+        - priceInterval
+        - features
+        - highlights
+        - ctaLabel
+      properties:
+        id: { $ref: "#/components/schemas/PlanId" }
+        name: { type: string }
+        tagline: { type: string }
+        priceCents: { type: integer }
+        priceInterval:
+          type: string
+          enum: [month, year, free]
+        projectLimit:
+          type: integer
+          nullable: true
+          description: null = unlimited
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanFeature"
+        highlights:
+          type: array
+          items: { type: string }
+        ctaLabel: { type: string }
+        stripePriceId:
+          type: string
+          nullable: true
+          description: Reserved for future Stripe wiring; null in mock mode.
+
+    BillingUsage:
+      type: object
+      required: [projectCount]
+      properties:
+        projectCount: { type: integer }
+        projectLimit:
+          type: integer
+          nullable: true
+
+    BillingState:
+      type: object
+      required:
+        - plan
+        - status
+        - planMeta
+        - features
+        - usage
+        - providerName
+        - cancelAtPeriodEnd
+        - updatedAt
+      properties:
+        plan: { $ref: "#/components/schemas/PlanId" }
+        status: { $ref: "#/components/schemas/SubscriptionStatus" }
+        planMeta: { $ref: "#/components/schemas/PlanCatalogItem" }
+        features:
+          type: array
+          items: { $ref: "#/components/schemas/PlanFeature" }
+        usage: { $ref: "#/components/schemas/BillingUsage" }
+        providerName:
+          type: string
+          enum: [mock, stripe]
+        currentPeriodStart:
+          type: string
+          format: date-time
+          nullable: true
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          nullable: true
+        cancelAtPeriodEnd: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+
+    UpgradePlanInput:
+      type: object
+      required: [plan]
+      properties:
+        plan: { $ref: "#/components/schemas/PlanId" }

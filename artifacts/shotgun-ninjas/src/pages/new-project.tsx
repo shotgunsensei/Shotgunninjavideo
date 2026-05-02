@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Film } from "lucide-react";
+import { Loader2, Film, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateProject } from "@workspace/api-client-react";
+import { useBilling } from "@/hooks/use-billing";
+import { PLAN_CATALOG } from "@workspace/billing";
 
 const formSchema = z.object({
   title: z.string().min(1, "Project title is required"),
@@ -31,6 +33,9 @@ export default function NewProject() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createProject = useCreateProject();
+  const billing = useBilling();
+  const canCreate = billing.canCreateProject();
+  const requiredPlan = billing.requiredPlanForFeature("unlimited_projects");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,11 +59,17 @@ export default function NewProject() {
           });
           setLocation(`/projects/${data.id}/upload`);
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          // Surface plan-limit messages from the API verbatim so the user
+          // knows exactly which plan unlocks more projects.
+          const message =
+            err instanceof Error && err.message
+              ? err.message
+              : "Could not create project. Please try again.";
           toast({
             variant: "destructive",
             title: "Initialization Failed",
-            description: "Could not create project. Please try again.",
+            description: message,
           });
         }
       }
@@ -71,6 +82,36 @@ export default function NewProject() {
         <h1 className="text-3xl font-bold tracking-tighter uppercase">New Project</h1>
         <p className="text-muted-foreground font-mono text-sm">Initialize workspace parameters</p>
       </div>
+
+      {!canCreate && (
+        <div
+          className="border-2 border-yellow-500/40 bg-yellow-500/5 p-5 space-y-3"
+          data-testid="plan-limit-banner"
+        >
+          <div className="flex items-center gap-2 text-yellow-300">
+            <Lock className="w-4 h-4" />
+            <h2 className="text-sm font-bold uppercase tracking-widest">
+              {billing.planMeta.name} plan limit reached
+            </h2>
+          </div>
+          <p className="text-xs font-mono leading-relaxed text-muted-foreground">
+            You've used {billing.projectCount} of {billing.projectLimit} project
+            slots on the {billing.planMeta.name} plan. Upgrade to{" "}
+            <span className="text-foreground font-bold">
+              {PLAN_CATALOG[requiredPlan].name}
+            </span>{" "}
+            for unlimited projects, advanced exports, and faster generation.
+          </p>
+          <Link href="/pricing">
+            <Button
+              className="rounded-none uppercase tracking-widest text-xs font-bold bg-yellow-500 text-black hover:bg-yellow-400"
+              data-testid="button-upgrade-from-limit"
+            >
+              View pricing → Upgrade to {PLAN_CATALOG[requiredPlan].name}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       <div className="p-8 border border-border/50 bg-card/30 backdrop-blur relative">
         <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -179,12 +220,18 @@ export default function NewProject() {
                 type="submit" 
                 size="lg" 
                 className="rounded-none uppercase tracking-widest font-bold min-w-[200px]"
-                disabled={createProject.isPending}
+                disabled={createProject.isPending || !canCreate}
+                data-testid="button-create-project"
               >
                 {createProject.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Initializing...
+                  </>
+                ) : !canCreate ? (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Limit Reached
                   </>
                 ) : (
                   "Create Project"

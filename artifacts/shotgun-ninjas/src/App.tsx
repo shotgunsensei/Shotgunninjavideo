@@ -18,6 +18,7 @@ import ContinuityPage from "@/pages/continuity";
 import PromptEngine from "@/pages/prompt-engine";
 import Export from "@/pages/export";
 import Settings from "@/pages/settings";
+import Pricing from "@/pages/pricing";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ function Router() {
         <Route path="/projects/:id/prompt-engine" component={PromptEngine} />
         <Route path="/projects/:id/export" component={Export} />
         <Route path="/settings" component={Settings} />
+        <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
