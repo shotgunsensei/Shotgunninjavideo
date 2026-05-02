@@ -61,6 +61,14 @@ Audio metadata uploads (`POST /api/projects/:id/audio`) additionally enforce a m
 
 `POST /api/projects/:id/analyze` accepts a Web-Audio-derived analysis payload from the browser, but if the body is empty (e.g. the IndexedDB cache was cleared, or the browser failed to decode the file), the server falls back to a deterministic mock analysis via `lib/mockAnalysis.ts → buildMockAnalysis`. The client's `analysis.tsx` triggers this fallback automatically when no cached blob is found and the catch block on the analyze flow marks the active stage as error and surfaces a toast. End result: the user is never blocked from progressing to the storyboard.
 
+### Public marketing landing page
+
+`/` (root) renders `artifacts/shotgun-ninjas/src/pages/home.tsx` — a full-bleed marketing site (no app sidebar; `Layout` strips it via `isLandingPage = location === "/"`). Eleven sections in order: fixed top nav → Hero → Problem → Solution → How it works (`#how-it-works`) → Demo preview → Feature grid (`#features`) → Pricing (`#pricing`, pulls real `PLAN_CATALOG`, "creator" marked Most Popular) → Example exports (10 formats with tier badges) → Creator workflow → FAQ (`#faq`, custom collapsible with `aria-controls`/`aria-expanded` + `role="region"`) → Final CTA → Footer.
+
+Primary CTA "Start Your First Video Plan" → `/projects/new`. Secondary CTA "View Demo Project" is **dynamic** — `useDemoProjectHref()` calls `useListProjects()`, ranks by status (`exported > storyboarded > analyzed > uploaded > draft`), and links to the best one. Falls back to `/dashboard` if no projects exist (fresh DB on first deploy). Never hardcode a demo id here — the seed id can change between environments.
+
+All section anchors use `scroll-mt-20` to offset the fixed nav. Mock storyboard waveform uses deterministic `Math.sin/cos` (not `Math.random`) so SSR / re-renders are stable.
+
 ## Documentation
 
 `README.md` (project root) is the canonical onboarding doc. Update it whenever env vars, workflows, or setup steps change. `.env.example` lists every variable the project reads (`PORT`, `BASE_PATH`, `DATABASE_URL`, `SESSION_SECRET`, `NODE_ENV`, `ALLOWED_ORIGINS`, `BILLING_PROVIDER`, and the three reserved Stripe slots). On Replit, `PORT`, `BASE_PATH`, and `DATABASE_URL` are injected automatically per artifact — never hard-code them.
