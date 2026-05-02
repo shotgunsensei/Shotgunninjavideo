@@ -1396,6 +1396,167 @@ export const CancelBillingPlanResponse = zod.object({
 });
 
 /**
+ * @summary List supported marketing asset kinds and export formats
+ */
+export const GetMarketingAssetCatalogResponse = zod.object({
+  kinds: zod.array(
+    zod.object({
+      kind: zod.enum([
+        "youtube_titles",
+        "youtube_description",
+        "tiktok_caption",
+        "instagram_caption",
+        "facebook_caption",
+        "hashtags",
+        "teaser_15s",
+        "teaser_30s",
+        "trailer_60s",
+        "thumbnail_prompt",
+        "cover_art_prompt",
+        "behind_the_scenes",
+        "release_announcement",
+      ]),
+      label: zod.string(),
+      group: zod.enum([
+        "platform",
+        "captions",
+        "video_plan",
+        "visual",
+        "content",
+      ]),
+      description: zod.string(),
+    }),
+  ),
+  formats: zod.array(
+    zod.object({
+      format: zod.enum(["txt", "csv", "json"]),
+      ext: zod.string(),
+      mime: zod.string(),
+      label: zod.string(),
+    }),
+  ),
+});
+
+export const ListMarketingAssetsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ListMarketingAssetsResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  kind: zod.enum([
+    "youtube_titles",
+    "youtube_description",
+    "tiktok_caption",
+    "instagram_caption",
+    "facebook_caption",
+    "hashtags",
+    "teaser_15s",
+    "teaser_30s",
+    "trailer_60s",
+    "thumbnail_prompt",
+    "cover_art_prompt",
+    "behind_the_scenes",
+    "release_announcement",
+  ]),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListMarketingAssetsResponse = zod.array(
+  ListMarketingAssetsResponseItem,
+);
+
+/**
+ * @summary Generate every marketing asset kind for the project (overwrites existing)
+ */
+export const GenerateMarketingAssetsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GenerateMarketingAssetsResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  kind: zod.enum([
+    "youtube_titles",
+    "youtube_description",
+    "tiktok_caption",
+    "instagram_caption",
+    "facebook_caption",
+    "hashtags",
+    "teaser_15s",
+    "teaser_30s",
+    "trailer_60s",
+    "thumbnail_prompt",
+    "cover_art_prompt",
+    "behind_the_scenes",
+    "release_announcement",
+  ]),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const GenerateMarketingAssetsResponse = zod.array(
+  GenerateMarketingAssetsResponseItem,
+);
+
+/**
+ * @summary Regenerate a single marketing asset kind
+ */
+export const RegenerateMarketingAssetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const RegenerateMarketingAssetBody = zod.object({
+  kind: zod.enum([
+    "youtube_titles",
+    "youtube_description",
+    "tiktok_caption",
+    "instagram_caption",
+    "facebook_caption",
+    "hashtags",
+    "teaser_15s",
+    "teaser_30s",
+    "trailer_60s",
+    "thumbnail_prompt",
+    "cover_art_prompt",
+    "behind_the_scenes",
+    "release_announcement",
+  ]),
+});
+
+export const RegenerateMarketingAssetResponse = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  kind: zod.enum([
+    "youtube_titles",
+    "youtube_description",
+    "tiktok_caption",
+    "instagram_caption",
+    "facebook_caption",
+    "hashtags",
+    "teaser_15s",
+    "teaser_30s",
+    "trailer_60s",
+    "thumbnail_prompt",
+    "cover_art_prompt",
+    "behind_the_scenes",
+    "release_announcement",
+  ]),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Download the marketing asset pack as TXT, CSV, or JSON
+ */
+export const ExportMarketingAssetsParams = zod.object({
+  id: zod.coerce.string(),
+  format: zod.enum(["txt", "csv", "json"]),
+});
+
+/**
  * @summary List all brand presets (defaults + user-created)
  */
 export const ListBrandPresetsResponseItem = zod.object({

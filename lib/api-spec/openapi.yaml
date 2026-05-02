@@ -887,6 +887,101 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingState"
 
+  /marketing-assets/catalog:
+    get:
+      operationId: getMarketingAssetCatalog
+      tags: [marketing-assets]
+      summary: List supported marketing asset kinds and export formats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketingAssetCatalog" }
+
+  /projects/{id}/marketing-assets:
+    get:
+      operationId: listMarketingAssets
+      tags: [marketing-assets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketingAsset" }
+
+  /projects/{id}/marketing-assets/generate:
+    post:
+      operationId: generateMarketingAssets
+      tags: [marketing-assets]
+      summary: Generate every marketing asset kind for the project (overwrites existing)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketingAsset" }
+
+  /projects/{id}/marketing-assets/regenerate:
+    post:
+      operationId: regenerateMarketingAsset
+      tags: [marketing-assets]
+      summary: Regenerate a single marketing asset kind
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegenerateMarketingAssetInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketingAsset" }
+
+  /projects/{id}/marketing-assets/export/{format}:
+    get:
+      operationId: exportMarketingAssets
+      tags: [marketing-assets]
+      summary: Download the marketing asset pack as TXT, CSV, or JSON
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [txt, csv, json]
+      responses:
+        "200":
+          description: OK — body is plain text. Format is signalled by the file
+            extension in the Content-Disposition header (.txt / .csv / .json).
+            JSON & CSV bodies are valid for downstream parsing.
+          content:
+            text/plain: { schema: { type: string } }
+
   /brand-presets:
     get:
       operationId: listBrandPresets
@@ -1842,6 +1937,73 @@ components:
       required: [plan]
       properties:
         plan: { $ref: "#/components/schemas/PlanId" }
+
+    MarketingAssetKind:
+      type: string
+      enum:
+        - youtube_titles
+        - youtube_description
+        - tiktok_caption
+        - instagram_caption
+        - facebook_caption
+        - hashtags
+        - teaser_15s
+        - teaser_30s
+        - trailer_60s
+        - thumbnail_prompt
+        - cover_art_prompt
+        - behind_the_scenes
+        - release_announcement
+
+    MarketingAsset:
+      type: object
+      required: [id, projectId, kind, content, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        kind: { $ref: "#/components/schemas/MarketingAssetKind" }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    RegenerateMarketingAssetInput:
+      type: object
+      required: [kind]
+      properties:
+        kind: { $ref: "#/components/schemas/MarketingAssetKind" }
+
+    MarketingKindMeta:
+      type: object
+      required: [kind, label, group, description]
+      properties:
+        kind: { $ref: "#/components/schemas/MarketingAssetKind" }
+        label: { type: string }
+        group:
+          type: string
+          enum: [platform, captions, video_plan, visual, content]
+        description: { type: string }
+
+    MarketingExportFormatMeta:
+      type: object
+      required: [format, ext, mime, label]
+      properties:
+        format:
+          type: string
+          enum: [txt, csv, json]
+        ext: { type: string }
+        mime: { type: string }
+        label: { type: string }
+
+    MarketingAssetCatalog:
+      type: object
+      required: [kinds, formats]
+      properties:
+        kinds:
+          type: array
+          items: { $ref: "#/components/schemas/MarketingKindMeta" }
+        formats:
+          type: array
+          items: { $ref: "#/components/schemas/MarketingExportFormatMeta" }
 
     BrandPreset:
       type: object

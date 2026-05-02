@@ -10,3 +10,4 @@ export * from "./activity";
 export * from "./settings";
 export * from "./billing";
 export * from "./brandPresets";
+export * from "./marketingAssets";

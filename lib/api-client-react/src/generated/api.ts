@@ -34,6 +34,8 @@ import type {
   GenerateStoryboardInput,
   HealthStatus,
   LyricLine,
+  MarketingAsset,
+  MarketingAssetCatalog,
   ParseLyricsInput,
   ParseLyricsResult,
   PlanCatalogItem,
@@ -41,6 +43,7 @@ import type {
   ProjectDetail,
   Prompt,
   PromptEngineResponse,
+  RegenerateMarketingAssetInput,
   SaveAsBrandPresetInput,
   SaveLyricsInput,
   Settings,
@@ -3625,6 +3628,436 @@ export const useCancelBillingPlan = <
 > => {
   return useMutation(getCancelBillingPlanMutationOptions(options));
 };
+
+/**
+ * @summary List supported marketing asset kinds and export formats
+ */
+export const getGetMarketingAssetCatalogUrl = () => {
+  return `/api/marketing-assets/catalog`;
+};
+
+export const getMarketingAssetCatalog = async (
+  options?: RequestInit,
+): Promise<MarketingAssetCatalog> => {
+  return customFetch<MarketingAssetCatalog>(getGetMarketingAssetCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMarketingAssetCatalogQueryKey = () => {
+  return [`/api/marketing-assets/catalog`] as const;
+};
+
+export const getGetMarketingAssetCatalogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMarketingAssetCatalog>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMarketingAssetCatalog>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMarketingAssetCatalogQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMarketingAssetCatalog>>
+  > = ({ signal }) => getMarketingAssetCatalog({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMarketingAssetCatalog>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMarketingAssetCatalogQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMarketingAssetCatalog>>
+>;
+export type GetMarketingAssetCatalogQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List supported marketing asset kinds and export formats
+ */
+
+export function useGetMarketingAssetCatalog<
+  TData = Awaited<ReturnType<typeof getMarketingAssetCatalog>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMarketingAssetCatalog>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMarketingAssetCatalogQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getListMarketingAssetsUrl = (id: string) => {
+  return `/api/projects/${id}/marketing-assets`;
+};
+
+export const listMarketingAssets = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MarketingAsset[]> => {
+  return customFetch<MarketingAsset[]>(getListMarketingAssetsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMarketingAssetsQueryKey = (id: string) => {
+  return [`/api/projects/${id}/marketing-assets`] as const;
+};
+
+export const getListMarketingAssetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMarketingAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMarketingAssets>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMarketingAssetsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listMarketingAssets>>
+  > = ({ signal }) => listMarketingAssets(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMarketingAssets>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMarketingAssetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMarketingAssets>>
+>;
+export type ListMarketingAssetsQueryError = ErrorType<unknown>;
+
+export function useListMarketingAssets<
+  TData = Awaited<ReturnType<typeof listMarketingAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMarketingAssets>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMarketingAssetsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Generate every marketing asset kind for the project (overwrites existing)
+ */
+export const getGenerateMarketingAssetsUrl = (id: string) => {
+  return `/api/projects/${id}/marketing-assets/generate`;
+};
+
+export const generateMarketingAssets = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MarketingAsset[]> => {
+  return customFetch<MarketingAsset[]>(getGenerateMarketingAssetsUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateMarketingAssetsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMarketingAssets>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateMarketingAssets>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["generateMarketingAssets"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateMarketingAssets>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return generateMarketingAssets(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateMarketingAssetsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateMarketingAssets>>
+>;
+
+export type GenerateMarketingAssetsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate every marketing asset kind for the project (overwrites existing)
+ */
+export const useGenerateMarketingAssets = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMarketingAssets>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateMarketingAssets>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getGenerateMarketingAssetsMutationOptions(options));
+};
+
+/**
+ * @summary Regenerate a single marketing asset kind
+ */
+export const getRegenerateMarketingAssetUrl = (id: string) => {
+  return `/api/projects/${id}/marketing-assets/regenerate`;
+};
+
+export const regenerateMarketingAsset = async (
+  id: string,
+  regenerateMarketingAssetInput: RegenerateMarketingAssetInput,
+  options?: RequestInit,
+): Promise<MarketingAsset> => {
+  return customFetch<MarketingAsset>(getRegenerateMarketingAssetUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateMarketingAssetInput),
+  });
+};
+
+export const getRegenerateMarketingAssetMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateMarketingAsset>>,
+    TError,
+    { id: string; data: BodyType<RegenerateMarketingAssetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof regenerateMarketingAsset>>,
+  TError,
+  { id: string; data: BodyType<RegenerateMarketingAssetInput> },
+  TContext
+> => {
+  const mutationKey = ["regenerateMarketingAsset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof regenerateMarketingAsset>>,
+    { id: string; data: BodyType<RegenerateMarketingAssetInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return regenerateMarketingAsset(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegenerateMarketingAssetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof regenerateMarketingAsset>>
+>;
+export type RegenerateMarketingAssetMutationBody =
+  BodyType<RegenerateMarketingAssetInput>;
+export type RegenerateMarketingAssetMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Regenerate a single marketing asset kind
+ */
+export const useRegenerateMarketingAsset = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateMarketingAsset>>,
+    TError,
+    { id: string; data: BodyType<RegenerateMarketingAssetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof regenerateMarketingAsset>>,
+  TError,
+  { id: string; data: BodyType<RegenerateMarketingAssetInput> },
+  TContext
+> => {
+  return useMutation(getRegenerateMarketingAssetMutationOptions(options));
+};
+
+/**
+ * @summary Download the marketing asset pack as TXT, CSV, or JSON
+ */
+export const getExportMarketingAssetsUrl = (
+  id: string,
+  format: "txt" | "csv" | "json",
+) => {
+  return `/api/projects/${id}/marketing-assets/export/${format}`;
+};
+
+export const exportMarketingAssets = async (
+  id: string,
+  format: "txt" | "csv" | "json",
+  options?: RequestInit,
+): Promise<string> => {
+  return customFetch<string>(getExportMarketingAssetsUrl(id, format), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getExportMarketingAssetsQueryKey = (
+  id: string,
+  format: "txt" | "csv" | "json",
+) => {
+  return [`/api/projects/${id}/marketing-assets/export/${format}`] as const;
+};
+
+export const getExportMarketingAssetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportMarketingAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  format: "txt" | "csv" | "json",
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof exportMarketingAssets>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getExportMarketingAssetsQueryKey(id, format);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof exportMarketingAssets>>
+  > = ({ signal }) =>
+    exportMarketingAssets(id, format, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(id && format),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportMarketingAssets>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ExportMarketingAssetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportMarketingAssets>>
+>;
+export type ExportMarketingAssetsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Download the marketing asset pack as TXT, CSV, or JSON
+ */
+
+export function useExportMarketingAssets<
+  TData = Awaited<ReturnType<typeof exportMarketingAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  format: "txt" | "csv" | "json",
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof exportMarketingAssets>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getExportMarketingAssetsQueryOptions(
+    id,
+    format,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List all brand presets (defaults + user-created)

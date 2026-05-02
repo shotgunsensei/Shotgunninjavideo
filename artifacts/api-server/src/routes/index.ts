@@ -13,6 +13,7 @@ import settingsRouter from "./settings";
 import statsRouter from "./stats";
 import billingRouter from "./billing";
 import brandPresetsRouter from "./brandPresets";
+import marketingAssetsRouter from "./marketingAssets";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(exportsRouter);
 router.use(settingsRouter);
 router.use(billingRouter);
 router.use(brandPresetsRouter);
+router.use(marketingAssetsRouter);
 
 export default router;

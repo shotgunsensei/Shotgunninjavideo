@@ -706,6 +706,77 @@ export interface UpgradePlanInput {
   plan: PlanId;
 }
 
+export type MarketingAssetKind =
+  (typeof MarketingAssetKind)[keyof typeof MarketingAssetKind];
+
+export const MarketingAssetKind = {
+  youtube_titles: "youtube_titles",
+  youtube_description: "youtube_description",
+  tiktok_caption: "tiktok_caption",
+  instagram_caption: "instagram_caption",
+  facebook_caption: "facebook_caption",
+  hashtags: "hashtags",
+  teaser_15s: "teaser_15s",
+  teaser_30s: "teaser_30s",
+  trailer_60s: "trailer_60s",
+  thumbnail_prompt: "thumbnail_prompt",
+  cover_art_prompt: "cover_art_prompt",
+  behind_the_scenes: "behind_the_scenes",
+  release_announcement: "release_announcement",
+} as const;
+
+export interface MarketingAsset {
+  id: string;
+  projectId: string;
+  kind: MarketingAssetKind;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RegenerateMarketingAssetInput {
+  kind: MarketingAssetKind;
+}
+
+export type MarketingKindMetaGroup =
+  (typeof MarketingKindMetaGroup)[keyof typeof MarketingKindMetaGroup];
+
+export const MarketingKindMetaGroup = {
+  platform: "platform",
+  captions: "captions",
+  video_plan: "video_plan",
+  visual: "visual",
+  content: "content",
+} as const;
+
+export interface MarketingKindMeta {
+  kind: MarketingAssetKind;
+  label: string;
+  group: MarketingKindMetaGroup;
+  description: string;
+}
+
+export type MarketingExportFormatMetaFormat =
+  (typeof MarketingExportFormatMetaFormat)[keyof typeof MarketingExportFormatMetaFormat];
+
+export const MarketingExportFormatMetaFormat = {
+  txt: "txt",
+  csv: "csv",
+  json: "json",
+} as const;
+
+export interface MarketingExportFormatMeta {
+  format: MarketingExportFormatMetaFormat;
+  ext: string;
+  mime: string;
+  label: string;
+}
+
+export interface MarketingAssetCatalog {
+  kinds: MarketingKindMeta[];
+  formats: MarketingExportFormatMeta[];
+}
+
 export interface BrandPreset {
   id: string;
   name: string;

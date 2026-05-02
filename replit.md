@@ -64,6 +64,29 @@ Two demo projects are seeded idempotently on every server start (`artifacts/api-
 
 Each demo seed checks for its own title before inserting, so the seeder is safe to run on every boot and can add new built-in templates without disturbing existing ones.
 
+## Marketing Asset Pack (Batch Content Generator)
+
+Per-project page at **`/projects/:id/marketing`** (sidebar Megaphone icon, between Prompt Engine and Export). Turns one project into 13 ready-to-post marketing assets in five groups:
+
+- **Platform Copy**: YouTube title ideas, YouTube description (with timestamps from scenes)
+- **Social Captions**: TikTok, Instagram, Facebook, hashtag bundles (per-platform tuned)
+- **Cut-down Video Plans**: 15s teaser, 30s teaser, 60s trailer (beat-by-beat cut sheets pulled from storyboard scenes)
+- **Visual Asset Prompts**: thumbnail prompt, cover art prompt (AI-image ready, includes negative prompts and the project's brand preset palette)
+- **Story Content**: behind-the-scenes post, release announcement
+
+**DB**: `marketing_assets` table — `(id, projectId FK cascade, kind text, content text, createdAt, updatedAt)` with `UNIQUE (project_id, kind)` so regeneration upserts in place. `MARKETING_ASSET_KINDS` enum exported from `lib/db/src/schema/marketingAssets.ts`.
+
+**API** (`artifacts/api-server/src/routes/marketingAssets.ts`):
+- `GET  /api/marketing-assets/catalog` — kinds + export formats metadata (group, label, description)
+- `GET  /api/projects/{id}/marketing-assets` — list current assets for project
+- `POST /api/projects/{id}/marketing-assets/generate` — generate ALL 13 (transactional upsert)
+- `POST /api/projects/{id}/marketing-assets/regenerate` — body `{kind}`, regenerates one
+- `GET  /api/projects/{id}/marketing-assets/export/{format}` — `format` is path param `txt|csv|json`. Always served as `text/plain` so the OpenAPI `string` contract holds; the file extension in `Content-Disposition: attachment` preserves format identity.
+
+**Generators** (`artifacts/api-server/src/lib/marketingAssetGenerator.ts`) are deterministic templates that splice `project.title/artist/genre/mood/lyrics/bpm/keySignature`, sampled storyboard scenes (evenly across the timeline arc), and the linked brand preset (palette, voice tone, watermark, negative prompt rules) into platform-specific copy. Teaser/trailer plans use beat blueprints sized per duration; thumbnail/cover-art prompts pick a hero close-up scene when available. CSV export uses the same formula-injection defense as the main exporter (now hardened against the leading-whitespace bypass: `^\s*[=+\-@\t\r]` → prefixed with `'`).
+
+**Frontend** (`pages/marketing.tsx`): grouped cards with copy + regenerate buttons per asset, top "Generate All" button, and TXT/CSV/JSON download buttons (disabled until 13/13 generated).
+
 ## Brand Presets
 
 Reusable visual identity packs at **`/brand-presets`** (sidebar Palette icon). Each preset has 10 fields: brand name, main character description, color palette (comma-separated hex), visual style, logo description, voice/tone, recurring symbols, preferred camera language, negative prompt rules, export watermark text.

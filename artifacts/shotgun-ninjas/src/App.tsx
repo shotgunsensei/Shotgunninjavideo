@@ -20,6 +20,7 @@ import Export from "@/pages/export";
 import Settings from "@/pages/settings";
 import Pricing from "@/pages/pricing";
 import BrandPresetsPage from "@/pages/brand-presets";
+import MarketingPage from "@/pages/marketing";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ function Router() {
         <Route path="/projects/:id/scenes/:sceneId" component={SceneEditor} />
         <Route path="/projects/:id/prompt-engine" component={PromptEngine} />
         <Route path="/projects/:id/export" component={Export} />
+        <Route path="/projects/:id/marketing" component={MarketingPage} />
         <Route path="/settings" component={Settings} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/brand-presets" component={BrandPresetsPage} />
