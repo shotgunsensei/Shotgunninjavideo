@@ -13,6 +13,7 @@ tags:
   - name: audio
   - name: timeline
   - name: storyboard
+  - name: lyrics
   - name: prompts
   - name: exports
   - name: settings
@@ -483,6 +484,139 @@ paths:
                 items:
                   $ref: "#/components/schemas/StoryboardScene"
 
+  /projects/{id}/lyrics:
+    get:
+      operationId: getLyrics
+      tags: [lyrics]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LyricLine"
+    put:
+      operationId: saveLyrics
+      tags: [lyrics]
+      summary: Replace the project's lyric lines
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveLyricsInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LyricLine"
+
+  /projects/{id}/lyrics/parse:
+    post:
+      operationId: parseLyrics
+      tags: [lyrics]
+      summary: Parse raw lyric text into structured lines (does not save)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseLyricsInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseLyricsResult"
+
+  /projects/{id}/lyrics/auto-assign:
+    post:
+      operationId: autoAssignLyrics
+      tags: [lyrics]
+      summary: Distribute untimestamped, unassigned lyric lines evenly across storyboard scenes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LyricLine"
+
+  /lyric-lines/{lineId}:
+    patch:
+      operationId: updateLyricLine
+      tags: [lyrics]
+      parameters:
+        - in: path
+          name: lineId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLyricLineInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LyricLine"
+    delete:
+      operationId: deleteLyricLine
+      tags: [lyrics]
+      parameters:
+        - in: path
+          name: lineId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LyricLine"
+
   /projects/{id}/prompts:
     get:
       operationId: getPrompts
@@ -944,6 +1078,78 @@ components:
         afterIndex:
           type: integer
           description: Insert immediately after this index. If omitted, scene is appended at the end.
+
+    LyricLine:
+      type: object
+      required: [id, projectId, index, text]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        index: { type: integer }
+        text: { type: string }
+        timestampSec:
+          type: number
+          nullable: true
+          description: Seconds from start of song. Null if untimestamped.
+        sceneId:
+          type: string
+          nullable: true
+          description: Manual assignment to a storyboard scene.
+
+    SaveLyricsLineInput:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string }
+        timestampSec:
+          type: number
+          nullable: true
+        sceneId:
+          type: string
+          nullable: true
+
+    SaveLyricsInput:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaveLyricsLineInput"
+
+    ParseLyricsInput:
+      type: object
+      required: [raw]
+      properties:
+        raw: { type: string }
+
+    ParseLyricsResult:
+      type: object
+      required: [hasTimestamps, lines]
+      properties:
+        hasTimestamps: { type: boolean }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [index, text]
+            properties:
+              index: { type: integer }
+              text: { type: string }
+              timestampSec:
+                type: number
+                nullable: true
+
+    UpdateLyricLineInput:
+      type: object
+      properties:
+        text: { type: string }
+        timestampSec:
+          type: number
+          nullable: true
+        sceneId:
+          type: string
+          nullable: true
 
     Prompt:
       type: object

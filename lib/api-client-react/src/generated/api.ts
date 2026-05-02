@@ -27,15 +27,20 @@ import type {
   ExportRecord,
   GenerateStoryboardInput,
   HealthStatus,
+  LyricLine,
+  ParseLyricsInput,
+  ParseLyricsResult,
   Project,
   ProjectDetail,
   Prompt,
+  SaveLyricsInput,
   Settings,
   SplitSegmentInput,
   StatsOverview,
   StoryboardScene,
   SubmitAnalysisInput,
   TimelineSegment,
+  UpdateLyricLineInput,
   UpdateProjectInput,
   UpdatePromptInput,
   UpdateSceneInput,
@@ -1924,6 +1929,501 @@ export const useDuplicateScene = <
   TContext
 > => {
   return useMutation(getDuplicateSceneMutationOptions(options));
+};
+
+export const getGetLyricsUrl = (id: string) => {
+  return `/api/projects/${id}/lyrics`;
+};
+
+export const getLyrics = async (
+  id: string,
+  options?: RequestInit,
+): Promise<LyricLine[]> => {
+  return customFetch<LyricLine[]>(getGetLyricsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLyricsQueryKey = (id: string) => {
+  return [`/api/projects/${id}/lyrics`] as const;
+};
+
+export const getGetLyricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLyrics>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLyrics>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLyricsQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLyrics>>> = ({
+    signal,
+  }) => getLyrics(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getLyrics>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetLyricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLyrics>>
+>;
+export type GetLyricsQueryError = ErrorType<unknown>;
+
+export function useGetLyrics<
+  TData = Awaited<ReturnType<typeof getLyrics>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLyrics>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLyricsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Replace the project's lyric lines
+ */
+export const getSaveLyricsUrl = (id: string) => {
+  return `/api/projects/${id}/lyrics`;
+};
+
+export const saveLyrics = async (
+  id: string,
+  saveLyricsInput: SaveLyricsInput,
+  options?: RequestInit,
+): Promise<LyricLine[]> => {
+  return customFetch<LyricLine[]>(getSaveLyricsUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveLyricsInput),
+  });
+};
+
+export const getSaveLyricsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveLyrics>>,
+    TError,
+    { id: string; data: BodyType<SaveLyricsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveLyrics>>,
+  TError,
+  { id: string; data: BodyType<SaveLyricsInput> },
+  TContext
+> => {
+  const mutationKey = ["saveLyrics"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveLyrics>>,
+    { id: string; data: BodyType<SaveLyricsInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return saveLyrics(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveLyricsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveLyrics>>
+>;
+export type SaveLyricsMutationBody = BodyType<SaveLyricsInput>;
+export type SaveLyricsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Replace the project's lyric lines
+ */
+export const useSaveLyrics = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveLyrics>>,
+    TError,
+    { id: string; data: BodyType<SaveLyricsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveLyrics>>,
+  TError,
+  { id: string; data: BodyType<SaveLyricsInput> },
+  TContext
+> => {
+  return useMutation(getSaveLyricsMutationOptions(options));
+};
+
+/**
+ * @summary Parse raw lyric text into structured lines (does not save)
+ */
+export const getParseLyricsUrl = (id: string) => {
+  return `/api/projects/${id}/lyrics/parse`;
+};
+
+export const parseLyrics = async (
+  id: string,
+  parseLyricsInput: ParseLyricsInput,
+  options?: RequestInit,
+): Promise<ParseLyricsResult> => {
+  return customFetch<ParseLyricsResult>(getParseLyricsUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(parseLyricsInput),
+  });
+};
+
+export const getParseLyricsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseLyrics>>,
+    TError,
+    { id: string; data: BodyType<ParseLyricsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof parseLyrics>>,
+  TError,
+  { id: string; data: BodyType<ParseLyricsInput> },
+  TContext
+> => {
+  const mutationKey = ["parseLyrics"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof parseLyrics>>,
+    { id: string; data: BodyType<ParseLyricsInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return parseLyrics(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ParseLyricsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof parseLyrics>>
+>;
+export type ParseLyricsMutationBody = BodyType<ParseLyricsInput>;
+export type ParseLyricsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Parse raw lyric text into structured lines (does not save)
+ */
+export const useParseLyrics = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseLyrics>>,
+    TError,
+    { id: string; data: BodyType<ParseLyricsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof parseLyrics>>,
+  TError,
+  { id: string; data: BodyType<ParseLyricsInput> },
+  TContext
+> => {
+  return useMutation(getParseLyricsMutationOptions(options));
+};
+
+/**
+ * @summary Distribute untimestamped, unassigned lyric lines evenly across storyboard scenes
+ */
+export const getAutoAssignLyricsUrl = (id: string) => {
+  return `/api/projects/${id}/lyrics/auto-assign`;
+};
+
+export const autoAssignLyrics = async (
+  id: string,
+  options?: RequestInit,
+): Promise<LyricLine[]> => {
+  return customFetch<LyricLine[]>(getAutoAssignLyricsUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAutoAssignLyricsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autoAssignLyrics>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof autoAssignLyrics>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["autoAssignLyrics"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof autoAssignLyrics>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return autoAssignLyrics(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AutoAssignLyricsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof autoAssignLyrics>>
+>;
+
+export type AutoAssignLyricsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Distribute untimestamped, unassigned lyric lines evenly across storyboard scenes
+ */
+export const useAutoAssignLyrics = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autoAssignLyrics>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof autoAssignLyrics>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getAutoAssignLyricsMutationOptions(options));
+};
+
+export const getUpdateLyricLineUrl = (lineId: string) => {
+  return `/api/lyric-lines/${lineId}`;
+};
+
+export const updateLyricLine = async (
+  lineId: string,
+  updateLyricLineInput: UpdateLyricLineInput,
+  options?: RequestInit,
+): Promise<LyricLine> => {
+  return customFetch<LyricLine>(getUpdateLyricLineUrl(lineId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateLyricLineInput),
+  });
+};
+
+export const getUpdateLyricLineMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateLyricLine>>,
+    TError,
+    { lineId: string; data: BodyType<UpdateLyricLineInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateLyricLine>>,
+  TError,
+  { lineId: string; data: BodyType<UpdateLyricLineInput> },
+  TContext
+> => {
+  const mutationKey = ["updateLyricLine"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateLyricLine>>,
+    { lineId: string; data: BodyType<UpdateLyricLineInput> }
+  > = (props) => {
+    const { lineId, data } = props ?? {};
+
+    return updateLyricLine(lineId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateLyricLineMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateLyricLine>>
+>;
+export type UpdateLyricLineMutationBody = BodyType<UpdateLyricLineInput>;
+export type UpdateLyricLineMutationError = ErrorType<unknown>;
+
+export const useUpdateLyricLine = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateLyricLine>>,
+    TError,
+    { lineId: string; data: BodyType<UpdateLyricLineInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateLyricLine>>,
+  TError,
+  { lineId: string; data: BodyType<UpdateLyricLineInput> },
+  TContext
+> => {
+  return useMutation(getUpdateLyricLineMutationOptions(options));
+};
+
+export const getDeleteLyricLineUrl = (lineId: string) => {
+  return `/api/lyric-lines/${lineId}`;
+};
+
+export const deleteLyricLine = async (
+  lineId: string,
+  options?: RequestInit,
+): Promise<LyricLine[]> => {
+  return customFetch<LyricLine[]>(getDeleteLyricLineUrl(lineId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteLyricLineMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteLyricLine>>,
+    TError,
+    { lineId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteLyricLine>>,
+  TError,
+  { lineId: string },
+  TContext
+> => {
+  const mutationKey = ["deleteLyricLine"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteLyricLine>>,
+    { lineId: string }
+  > = (props) => {
+    const { lineId } = props ?? {};
+
+    return deleteLyricLine(lineId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteLyricLineMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteLyricLine>>
+>;
+
+export type DeleteLyricLineMutationError = ErrorType<unknown>;
+
+export const useDeleteLyricLine = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteLyricLine>>,
+    TError,
+    { lineId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteLyricLine>>,
+  TError,
+  { lineId: string },
+  TContext
+> => {
+  return useMutation(getDeleteLyricLineMutationOptions(options));
 };
 
 export const getGetPromptsUrl = (id: string) => {

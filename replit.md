@@ -29,6 +29,7 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 - `audio_files` — uploaded audio metadata per project
 - `analysis` + `timeline_segments` — mock audio analysis (BPM/key/energy/loudness, segments with section + intensity + emotion, emotional map valence/arousal points)
 - `storyboard_scenes` — per-segment cinematic scene plan (shot type, camera, location, lighting, palette, wardrobe, **environment, characterAction, emotionalPurpose, motionIntensity, aiPrompt, locked**)
+- `lyric_lines` — parsed lyric lines per project (text, optional `timestampSec`, optional `sceneId` for manual assignment). Matched to scenes with this precedence: explicit `sceneId` always wins, otherwise `timestampSec` falls within `[scene.startSec, scene.endSec)`. Single source of truth: `artifacts/api-server/src/lib/lyricsParser.ts#lyricsForScene`.
 - `prompts` — AI video generation prompt per scene (model, text, negative prompt, aspect ratio, duration)
 - `exports` — generated JSON / TXT / production_plan exports
 - `activity` — recent activity feed
@@ -36,7 +37,9 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 
 ## Workflow
 
-Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → **(optional) Lyrics**: paste raw or `[mm:ss.cs]` / `[hh:mm:ss]` timestamped lyrics, parse, hand-assign untimed lines to scenes, then "Improve Storyboard" to regenerate unlocked scenes informed by per-scene lyric snippets → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+
+Lyric lines whose `sceneId` points at a scene that gets regenerated are remapped via `segmentId` (`remapLyricSceneIds` in `routes/storyboard.ts`) so manual assignments survive both `force` and non-force regeneration.
 
 The Storyboard page (`pages/storyboard.tsx`) lets the director:
 - Pick from 10 visual style presets (cyberpunk_uprising, gritty_urban, anime_cinematic, dark_industrial, motivational_founder, street_mv, luxury_cinematic, horror_energy, scifi_neon, custom) defined in `artifacts/api-server/src/lib/sceneGenerator.ts`.

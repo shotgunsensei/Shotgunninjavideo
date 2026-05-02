@@ -27,6 +27,7 @@ import {
   Wand2,
   Save,
   Settings2,
+  Mic2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,7 +75,9 @@ import {
   useDuplicateScene,
   useAddScene,
   useUpdateProject,
+  useGetLyrics,
   getGetStoryboardQueryKey,
+  getGetLyricsQueryKey,
   useGetProject,
   getGetProjectQueryKey,
   type StoryboardScene,
@@ -129,6 +132,31 @@ export default function Storyboard() {
       queryKey: getGetStoryboardQueryKey(projectId),
     },
   });
+
+  const { data: lyricLines = [] } = useGetLyrics(projectId, {
+    query: {
+      enabled: !!projectId,
+      queryKey: getGetLyricsQueryKey(projectId),
+    },
+  });
+
+  const lyricsBySceneId = useMemo(() => {
+    // Mirrors lyricsForScene() in the backend: manual sceneId always wins,
+    // otherwise fall back to timestamp window matching.
+    const m = new Map<string, string[]>();
+    if (!scenes) return m;
+    for (const s of scenes) {
+      const matched = lyricLines.filter((l) => {
+        if (l.sceneId) return l.sceneId === s.id;
+        if (l.timestampSec !== null && l.timestampSec !== undefined) {
+          return l.timestampSec >= s.startSec && l.timestampSec < s.endSec;
+        }
+        return false;
+      });
+      m.set(s.id, matched.map((l) => l.text));
+    }
+    return m;
+  }, [scenes, lyricLines]);
 
   const generate = useGenerateStoryboard();
   const updateScene = useUpdateScene();
@@ -586,6 +614,24 @@ export default function Storyboard() {
                         {scene.title}
                       </h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">{scene.description}</p>
+                      {(lyricsBySceneId.get(scene.id)?.length ?? 0) > 0 && (
+                        <div
+                          className="mt-3 border-l-2 border-accent/60 pl-3 py-1 space-y-0.5"
+                          data-testid={`scene-lyrics-${scene.id}`}
+                        >
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-accent/80">
+                            <Mic2 className="w-3 h-3" /> Lyrics in this scene
+                          </div>
+                          {lyricsBySceneId.get(scene.id)!.map((line, li) => (
+                            <p
+                              key={li}
+                              className="text-xs text-foreground/80 italic leading-snug"
+                            >
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Quick fields grid */}

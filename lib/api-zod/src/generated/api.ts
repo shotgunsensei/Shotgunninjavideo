@@ -713,6 +713,149 @@ export const DuplicateSceneParams = zod.object({
   sceneId: zod.coerce.string(),
 });
 
+export const GetLyricsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetLyricsResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  text: zod.string(),
+  timestampSec: zod
+    .number()
+    .nullish()
+    .describe("Seconds from start of song. Null if untimestamped."),
+  sceneId: zod
+    .string()
+    .nullish()
+    .describe("Manual assignment to a storyboard scene."),
+});
+export const GetLyricsResponse = zod.array(GetLyricsResponseItem);
+
+/**
+ * @summary Replace the project's lyric lines
+ */
+export const SaveLyricsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const SaveLyricsBody = zod.object({
+  lines: zod.array(
+    zod.object({
+      text: zod.string(),
+      timestampSec: zod.number().nullish(),
+      sceneId: zod.string().nullish(),
+    }),
+  ),
+});
+
+export const SaveLyricsResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  text: zod.string(),
+  timestampSec: zod
+    .number()
+    .nullish()
+    .describe("Seconds from start of song. Null if untimestamped."),
+  sceneId: zod
+    .string()
+    .nullish()
+    .describe("Manual assignment to a storyboard scene."),
+});
+export const SaveLyricsResponse = zod.array(SaveLyricsResponseItem);
+
+/**
+ * @summary Parse raw lyric text into structured lines (does not save)
+ */
+export const ParseLyricsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ParseLyricsBody = zod.object({
+  raw: zod.string(),
+});
+
+export const ParseLyricsResponse = zod.object({
+  hasTimestamps: zod.boolean(),
+  lines: zod.array(
+    zod.object({
+      index: zod.number(),
+      text: zod.string(),
+      timestampSec: zod.number().nullish(),
+    }),
+  ),
+});
+
+/**
+ * @summary Distribute untimestamped, unassigned lyric lines evenly across storyboard scenes
+ */
+export const AutoAssignLyricsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const AutoAssignLyricsResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  text: zod.string(),
+  timestampSec: zod
+    .number()
+    .nullish()
+    .describe("Seconds from start of song. Null if untimestamped."),
+  sceneId: zod
+    .string()
+    .nullish()
+    .describe("Manual assignment to a storyboard scene."),
+});
+export const AutoAssignLyricsResponse = zod.array(AutoAssignLyricsResponseItem);
+
+export const UpdateLyricLineParams = zod.object({
+  lineId: zod.coerce.string(),
+});
+
+export const UpdateLyricLineBody = zod.object({
+  text: zod.string().optional(),
+  timestampSec: zod.number().nullish(),
+  sceneId: zod.string().nullish(),
+});
+
+export const UpdateLyricLineResponse = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  text: zod.string(),
+  timestampSec: zod
+    .number()
+    .nullish()
+    .describe("Seconds from start of song. Null if untimestamped."),
+  sceneId: zod
+    .string()
+    .nullish()
+    .describe("Manual assignment to a storyboard scene."),
+});
+
+export const DeleteLyricLineParams = zod.object({
+  lineId: zod.coerce.string(),
+});
+
+export const DeleteLyricLineResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  index: zod.number(),
+  text: zod.string(),
+  timestampSec: zod
+    .number()
+    .nullish()
+    .describe("Seconds from start of song. Null if untimestamped."),
+  sceneId: zod
+    .string()
+    .nullish()
+    .describe("Manual assignment to a storyboard scene."),
+});
+export const DeleteLyricLineResponse = zod.array(DeleteLyricLineResponseItem);
+
 export const GetPromptsParams = zod.object({
   id: zod.coerce.string(),
 });

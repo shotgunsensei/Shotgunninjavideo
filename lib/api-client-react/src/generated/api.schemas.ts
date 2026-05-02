@@ -312,6 +312,48 @@ export interface CreateSceneInput {
   afterIndex?: number;
 }
 
+export interface LyricLine {
+  id: string;
+  projectId: string;
+  index: number;
+  text: string;
+  /** Seconds from start of song. Null if untimestamped. */
+  timestampSec?: number | null;
+  /** Manual assignment to a storyboard scene. */
+  sceneId?: string | null;
+}
+
+export interface SaveLyricsLineInput {
+  text: string;
+  timestampSec?: number | null;
+  sceneId?: string | null;
+}
+
+export interface SaveLyricsInput {
+  lines: SaveLyricsLineInput[];
+}
+
+export interface ParseLyricsInput {
+  raw: string;
+}
+
+export type ParseLyricsResultLinesItem = {
+  index: number;
+  text: string;
+  timestampSec?: number | null;
+};
+
+export interface ParseLyricsResult {
+  hasTimestamps: boolean;
+  lines: ParseLyricsResultLinesItem[];
+}
+
+export interface UpdateLyricLineInput {
+  text?: string;
+  timestampSec?: number | null;
+  sceneId?: string | null;
+}
+
 export type PromptModel = (typeof PromptModel)[keyof typeof PromptModel];
 
 export const PromptModel = {

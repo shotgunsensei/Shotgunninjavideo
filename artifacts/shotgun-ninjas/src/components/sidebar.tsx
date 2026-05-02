@@ -8,7 +8,8 @@ import {
   Activity, 
   Film, 
   FileText, 
-  Download 
+  Download,
+  Mic2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
@@ -35,6 +36,7 @@ export function Sidebar() {
     { href: `/projects/${projectId}`, label: "Hub", icon: Clapperboard },
     { href: `/projects/${projectId}/upload`, label: "Upload", icon: Upload },
     { href: `/projects/${projectId}/analysis`, label: "Analyze", icon: Activity },
+    { href: `/projects/${projectId}/lyrics`, label: "Lyrics", icon: Mic2 },
     { href: `/projects/${projectId}/storyboard`, label: "Storyboard", icon: Film },
     { href: `/projects/${projectId}/export`, label: "Export", icon: Download },
   ] : [];

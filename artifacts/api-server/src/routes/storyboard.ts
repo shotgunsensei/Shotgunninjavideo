@@ -6,6 +6,7 @@ import {
   timelineSegmentsTable,
   projectsTable,
   activityTable,
+  lyricLinesTable,
   type StoryboardScene,
   type InsertStoryboardScene,
 } from "@workspace/db";
@@ -19,6 +20,7 @@ import {
   VISUAL_STYLES,
   type VisualStyleId,
 } from "../lib/sceneGenerator";
+import { getLyricsBySceneId } from "./lyrics";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type DbOrTx = typeof db | Tx;
@@ -102,6 +104,69 @@ router.post("/projects/:id/storyboard", async (req, res) => {
 
     const existing = await loadProjectScenes(tx, id);
 
+    // Pre-compute lyric matches per segment. Two sources:
+    //   1. lines with timestamps that fall inside the segment's time window
+    //   2. lines manually assigned (via sceneId) to an existing scene that
+    //      currently maps to this segment — preserves the assignment intent
+    //      even though the scene id will change after regen.
+    const lyricLinesAll = await tx
+      .select()
+      .from(lyricLinesTable)
+      .where(eq(lyricLinesTable.projectId, id))
+      .orderBy(lyricLinesTable.index);
+
+    // Map of segmentId -> set of (current) sceneIds belonging to that segment.
+    const sceneIdsBySegment = new Map<string, Set<string>>();
+    // Map of sceneId -> segmentId, for remapping lyric_lines.sceneId after delete+insert.
+    const segmentBySceneId = new Map<string, string>();
+    for (const s of existing) {
+      if (!s.segmentId) continue;
+      segmentBySceneId.set(s.id, s.segmentId);
+      const set = sceneIdsBySegment.get(s.segmentId) ?? new Set<string>();
+      set.add(s.id);
+      sceneIdsBySegment.set(s.segmentId, set);
+    }
+
+    const lyricsForSegment = (seg: { id: string; startSec: number; endSec: number }): string[] => {
+      const ownSceneIds = sceneIdsBySegment.get(seg.id) ?? new Set<string>();
+      return lyricLinesAll
+        .filter((l) => {
+          // Manual assignment wins
+          if (l.sceneId) return ownSceneIds.has(l.sceneId);
+          if (l.timestampSec === null || l.timestampSec === undefined) return false;
+          return l.timestampSec >= seg.startSec && l.timestampSec < seg.endSec;
+        })
+        .map((l) => l.text);
+    };
+
+    // Remap lyric_lines.sceneId from old scene ids to the equivalent new scene
+    // for the same segmentId, so manual assignments survive regeneration.
+    const remapLyricSceneIds = async (newScenes: StoryboardScene[]) => {
+      const newSceneBySegment = new Map<string, string>();
+      for (const ns of newScenes) {
+        if (ns.segmentId) newSceneBySegment.set(ns.segmentId, ns.id);
+      }
+      for (const line of lyricLinesAll) {
+        if (!line.sceneId) continue;
+        const segId = segmentBySceneId.get(line.sceneId);
+        if (!segId) {
+          // assigned scene was floating (no segment) and got deleted — null it out
+          await tx
+            .update(lyricLinesTable)
+            .set({ sceneId: null })
+            .where(eq(lyricLinesTable.id, line.id));
+          continue;
+        }
+        const newSceneId = newSceneBySegment.get(segId);
+        if (newSceneId && newSceneId !== line.sceneId) {
+          await tx
+            .update(lyricLinesTable)
+            .set({ sceneId: newSceneId })
+            .where(eq(lyricLinesTable.id, line.id));
+        }
+      }
+    };
+
     if (force) {
       // Force: blow everything away and rebuild from segments only.
       await tx.delete(storyboardScenesTable).where(eq(storyboardScenesTable.projectId, id));
@@ -115,10 +180,13 @@ router.post("/projects/:id/storyboard", async (req, res) => {
           visualStyle,
           brandDirection: brandDirection ?? null,
           lyrics: lyrics ?? null,
+          lyricLinesInScene: lyricsForSegment(seg),
           seed: id,
         }),
       );
-      return tx.insert(storyboardScenesTable).values(fresh).returning();
+      const inserted = await tx.insert(storyboardScenesTable).values(fresh).returning();
+      await remapLyricSceneIds(inserted);
+      return inserted;
     }
 
     // Non-force: preserve every locked scene (including manually-added ones with null segmentId).
@@ -166,6 +234,7 @@ router.post("/projects/:id/storyboard", async (req, res) => {
           visualStyle,
           brandDirection: brandDirection ?? null,
           lyrics: lyrics ?? null,
+          lyricLinesInScene: lyricsForSegment(seg),
           seed: id,
         }),
       );
@@ -174,6 +243,11 @@ router.post("/projects/:id/storyboard", async (req, res) => {
     if (toInsert.length > 0) {
       await tx.insert(storyboardScenesTable).values(toInsert);
     }
+
+    // Remap any manual lyric sceneId assignments that pointed at unlocked
+    // scenes we just deleted — find the new scene with the same segmentId.
+    const allAfterInsert = await loadProjectScenes(tx, id);
+    await remapLyricSceneIds(allAfterInsert);
 
     // Re-sort all scenes by startSec then existing index, and re-number.
     const all = await loadProjectScenes(tx, id);
@@ -355,6 +429,7 @@ router.post("/storyboard/:sceneId/regenerate", async (req, res) => {
 
   const visualStyle = resolveStyle(project.visualStyle);
   const totalScenes = (await loadProjectScenes(db, scene.projectId)).length;
+  const lyricsBySceneId = await getLyricsBySceneId(scene.projectId, [scene]);
   const fresh = generateScene({
     projectId: scene.projectId,
     segment: {
@@ -372,6 +447,7 @@ router.post("/storyboard/:sceneId/regenerate", async (req, res) => {
     visualStyle,
     brandDirection: project.brandDirection,
     lyrics: project.lyrics,
+    lyricLinesInScene: lyricsBySceneId.get(scene.id) ?? [],
     seed: `${project.id}-regen-${Date.now()}`,
   });
 

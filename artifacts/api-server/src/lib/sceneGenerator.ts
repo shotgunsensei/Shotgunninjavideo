@@ -537,6 +537,12 @@ export interface SceneGenInput {
   visualStyle: VisualStyleId;
   brandDirection: string | null;
   lyrics: string | null;
+  /**
+   * Optional lyric snippets that fall within this scene's time window
+   * (or are manually assigned to it). When provided, they are used in
+   * place of the proportional lyrics-string fallback.
+   */
+  lyricLinesInScene?: string[];
   seed: string;
 }
 
@@ -555,7 +561,13 @@ export function generateScene(input: SceneGenInput): Omit<InsertStoryboardScene,
 
   const sectionLabel = SECTION_TITLE[input.segment.section] ?? "Scene";
   const motion = intensityToMotion(input.segment.intensity);
-  const snippet = lyricSnippet(input.lyrics, input.segment.index, input.totalSegments);
+  const inSceneLyrics = (input.lyricLinesInScene ?? [])
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const snippet =
+    inSceneLyrics.length > 0
+      ? inSceneLyrics.join(" / ")
+      : lyricSnippet(input.lyrics, input.segment.index, input.totalSegments);
   const brand = input.brandDirection?.trim() || null;
 
   const title = `${sectionLabel} — ${input.segment.emotion}`;
