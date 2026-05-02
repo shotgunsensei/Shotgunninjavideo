@@ -15,6 +15,7 @@ import {
   CreditCard,
   Palette,
   Megaphone,
+  Hammer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
@@ -49,6 +50,7 @@ export function Sidebar() {
     { href: `/projects/${projectId}/continuity`, label: "Continuity", icon: ShieldCheck },
     { href: `/projects/${projectId}/prompt-engine`, label: "Prompt Engine", icon: Wand2 },
     { href: `/projects/${projectId}/marketing`, label: "Marketing", icon: Megaphone },
+    { href: `/projects/${projectId}/render-plan`, label: "Render Plan", icon: Hammer },
     { href: `/projects/${projectId}/export`, label: "Export", icon: Download },
   ] : [];
 

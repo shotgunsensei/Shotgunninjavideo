@@ -21,6 +21,7 @@ import Settings from "@/pages/settings";
 import Pricing from "@/pages/pricing";
 import BrandPresetsPage from "@/pages/brand-presets";
 import MarketingPage from "@/pages/marketing";
+import RenderPlanPage from "@/pages/render-plan";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/projects/:id/prompt-engine" component={PromptEngine} />
         <Route path="/projects/:id/export" component={Export} />
         <Route path="/projects/:id/marketing" component={MarketingPage} />
+        <Route path="/projects/:id/render-plan" component={RenderPlanPage} />
         <Route path="/settings" component={Settings} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/brand-presets" component={BrandPresetsPage} />
