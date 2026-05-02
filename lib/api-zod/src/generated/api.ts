@@ -913,8 +913,21 @@ export const ListExportsParams = zod.object({
 export const ListExportsResponseItem = zod.object({
   id: zod.string(),
   projectId: zod.string(),
-  format: zod.enum(["json", "txt", "production_plan"]),
+  format: zod.enum([
+    "json",
+    "txt",
+    "production_plan",
+    "csv_shot_list",
+    "lyrics_timing",
+    "ai_prompt_pack",
+    "capcut_guide",
+    "davinci_guide",
+    "treatment",
+    "social_captions",
+  ]),
   content: zod.string(),
+  mimeType: zod.string(),
+  fileExtension: zod.string(),
   createdAt: zod.coerce.date(),
 });
 export const ListExportsResponse = zod.array(ListExportsResponseItem);
@@ -924,7 +937,18 @@ export const CreateExportParams = zod.object({
 });
 
 export const CreateExportBody = zod.object({
-  format: zod.enum(["json", "txt", "production_plan"]),
+  format: zod.enum([
+    "json",
+    "txt",
+    "production_plan",
+    "csv_shot_list",
+    "lyrics_timing",
+    "ai_prompt_pack",
+    "capcut_guide",
+    "davinci_guide",
+    "treatment",
+    "social_captions",
+  ]),
 });
 
 export const GetContinuityParams = zod.object({

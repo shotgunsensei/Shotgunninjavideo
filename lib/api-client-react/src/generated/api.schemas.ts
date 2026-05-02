@@ -397,34 +397,33 @@ export interface UpdatePromptInput {
   durationSec?: number;
 }
 
-export type ExportRecordFormat =
-  (typeof ExportRecordFormat)[keyof typeof ExportRecordFormat];
+export type ExportFormat = (typeof ExportFormat)[keyof typeof ExportFormat];
 
-export const ExportRecordFormat = {
+export const ExportFormat = {
   json: "json",
   txt: "txt",
   production_plan: "production_plan",
+  csv_shot_list: "csv_shot_list",
+  lyrics_timing: "lyrics_timing",
+  ai_prompt_pack: "ai_prompt_pack",
+  capcut_guide: "capcut_guide",
+  davinci_guide: "davinci_guide",
+  treatment: "treatment",
+  social_captions: "social_captions",
 } as const;
 
 export interface ExportRecord {
   id: string;
   projectId: string;
-  format: ExportRecordFormat;
+  format: ExportFormat;
   content: string;
+  mimeType: string;
+  fileExtension: string;
   createdAt: string;
 }
 
-export type CreateExportInputFormat =
-  (typeof CreateExportInputFormat)[keyof typeof CreateExportInputFormat];
-
-export const CreateExportInputFormat = {
-  json: "json",
-  txt: "txt",
-  production_plan: "production_plan",
-} as const;
-
 export interface CreateExportInput {
-  format: CreateExportInputFormat;
+  format: ExportFormat;
 }
 
 export interface Continuity {

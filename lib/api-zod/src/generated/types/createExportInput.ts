@@ -5,8 +5,8 @@
  * Shotgun Ninjas Video Engine API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateExportInputFormat } from "./createExportInputFormat";
+import type { ExportFormat } from "./exportFormat";
 
 export interface CreateExportInput {
-  format: CreateExportInputFormat;
+  format: ExportFormat;
 }

@@ -1262,14 +1262,22 @@ components:
 
     ExportRecord:
       type: object
-      required: [id, projectId, format, content, createdAt]
+      required:
+        - id
+        - projectId
+        - format
+        - content
+        - mimeType
+        - fileExtension
+        - createdAt
       properties:
         id: { type: string }
         projectId: { type: string }
         format:
-          type: string
-          enum: [json, txt, production_plan]
+          $ref: "#/components/schemas/ExportFormat"
         content: { type: string }
+        mimeType: { type: string }
+        fileExtension: { type: string }
         createdAt: { type: string, format: date-time }
 
     CreateExportInput:
@@ -1277,8 +1285,21 @@ components:
       required: [format]
       properties:
         format:
-          type: string
-          enum: [json, txt, production_plan]
+          $ref: "#/components/schemas/ExportFormat"
+
+    ExportFormat:
+      type: string
+      enum:
+        - json
+        - txt
+        - production_plan
+        - csv_shot_list
+        - lyrics_timing
+        - ai_prompt_pack
+        - capcut_guide
+        - davinci_guide
+        - treatment
+        - social_captions
 
     Continuity:
       type: object

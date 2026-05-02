@@ -5,12 +5,14 @@
  * Shotgun Ninjas Video Engine API
  * OpenAPI spec version: 0.1.0
  */
-import type { ExportRecordFormat } from "./exportRecordFormat";
+import type { ExportFormat } from "./exportFormat";
 
 export interface ExportRecord {
   id: string;
   projectId: string;
-  format: ExportRecordFormat;
+  format: ExportFormat;
   content: string;
+  mimeType: string;
+  fileExtension: string;
   createdAt: Date;
 }
