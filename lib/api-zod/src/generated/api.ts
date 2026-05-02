@@ -927,6 +927,73 @@ export const CreateExportBody = zod.object({
   format: zod.enum(["json", "txt", "production_plan"]),
 });
 
+export const GetContinuityParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetContinuityResponse = zod.object({
+  projectId: zod.string(),
+  mainCharacter: zod.string(),
+  outfit: zod.string(),
+  faceStyle: zod.string(),
+  vehicleProps: zod.string(),
+  logoSymbol: zod.string(),
+  brandStyle: zod.string(),
+  colorPalette: zod.string(),
+  locationWorld: zod.string(),
+  environmentRules: zod.string(),
+  recurringMotifs: zod.string(),
+  negativePromptLibrary: zod.string(),
+  lockEnabled: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});
+
+export const UpdateContinuityParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateContinuityBody = zod.object({
+  mainCharacter: zod.string().optional(),
+  outfit: zod.string().optional(),
+  faceStyle: zod.string().optional(),
+  vehicleProps: zod.string().optional(),
+  logoSymbol: zod.string().optional(),
+  brandStyle: zod.string().optional(),
+  colorPalette: zod.string().optional(),
+  locationWorld: zod.string().optional(),
+  environmentRules: zod.string().optional(),
+  recurringMotifs: zod.string().optional(),
+  negativePromptLibrary: zod.string().optional(),
+  lockEnabled: zod.boolean().optional(),
+});
+
+export const UpdateContinuityResponse = zod.object({
+  projectId: zod.string(),
+  mainCharacter: zod.string(),
+  outfit: zod.string(),
+  faceStyle: zod.string(),
+  vehicleProps: zod.string(),
+  logoSymbol: zod.string(),
+  brandStyle: zod.string(),
+  colorPalette: zod.string(),
+  locationWorld: zod.string(),
+  environmentRules: zod.string(),
+  recurringMotifs: zod.string(),
+  negativePromptLibrary: zod.string(),
+  lockEnabled: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});
+
+export const ApplyContinuityParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ApplyContinuityResponse = zod.object({
+  updatedSceneCount: zod.number(),
+  skippedLockedCount: zod.number(),
+  totalScenes: zod.number(),
+});
+
 export const GetPromptEngineParams = zod.object({
   id: zod.coerce.string(),
 });
@@ -966,6 +1033,18 @@ export const GetPromptEngineResponse = zod.object({
         capcut: zod.string(),
         davinci: zod.string(),
       }),
+      continuityChecklist: zod.object({
+        mainCharacter: zod.boolean(),
+        outfit: zod.boolean(),
+        faceStyle: zod.boolean(),
+        world: zod.boolean(),
+        brand: zod.boolean(),
+        logo: zod.boolean(),
+        palette: zod.boolean(),
+        motifs: zod.boolean(),
+        props: zod.boolean(),
+        negative: zod.boolean(),
+      }),
     }),
   ),
   platforms: zod.array(
@@ -987,6 +1066,7 @@ export const GetPromptEngineResponse = zod.object({
       description: zod.string(),
     }),
   ),
+  continuityLockEnabled: zod.boolean(),
 });
 
 export const GetSettingsResponse = zod.object({

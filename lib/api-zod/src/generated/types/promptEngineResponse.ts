@@ -11,4 +11,5 @@ import type { ScenePromptEngineRow } from "./scenePromptEngineRow";
 export interface PromptEngineResponse {
   scenes: ScenePromptEngineRow[];
   platforms: PlatformMeta[];
+  continuityLockEnabled: boolean;
 }

@@ -427,6 +427,57 @@ export interface CreateExportInput {
   format: CreateExportInputFormat;
 }
 
+export interface Continuity {
+  projectId: string;
+  mainCharacter: string;
+  outfit: string;
+  faceStyle: string;
+  vehicleProps: string;
+  logoSymbol: string;
+  brandStyle: string;
+  colorPalette: string;
+  locationWorld: string;
+  environmentRules: string;
+  recurringMotifs: string;
+  negativePromptLibrary: string;
+  lockEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface UpdateContinuityInput {
+  mainCharacter?: string;
+  outfit?: string;
+  faceStyle?: string;
+  vehicleProps?: string;
+  logoSymbol?: string;
+  brandStyle?: string;
+  colorPalette?: string;
+  locationWorld?: string;
+  environmentRules?: string;
+  recurringMotifs?: string;
+  negativePromptLibrary?: string;
+  lockEnabled?: boolean;
+}
+
+export interface ContinuityApplyResult {
+  updatedSceneCount: number;
+  skippedLockedCount: number;
+  totalScenes: number;
+}
+
+export interface ContinuityChecklist {
+  mainCharacter: boolean;
+  outfit: boolean;
+  faceStyle: boolean;
+  world: boolean;
+  brand: boolean;
+  logo: boolean;
+  palette: boolean;
+  motifs: boolean;
+  props: boolean;
+  negative: boolean;
+}
+
 export type PlatformId = (typeof PlatformId)[keyof typeof PlatformId];
 
 export const PlatformId = {
@@ -495,11 +546,13 @@ export interface ScenePromptEngineRow {
   cameraMovement: string;
   block: PromptBlock;
   platforms: PlatformPromptMap;
+  continuityChecklist: ContinuityChecklist;
 }
 
 export interface PromptEngineResponse {
   scenes: ScenePromptEngineRow[];
   platforms: PlatformMeta[];
+  continuityLockEnabled: boolean;
 }
 
 export type SettingsDefaultModel =

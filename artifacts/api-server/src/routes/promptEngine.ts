@@ -5,6 +5,7 @@ import {
   projectsTable,
   storyboardScenesTable,
   settingsTable,
+  continuityTable,
 } from "@workspace/db";
 import { PLATFORMS, buildScenePromptEngineRow } from "../lib/promptEngine";
 
@@ -26,18 +27,25 @@ router.get("/projects/:id/prompt-engine", async (req, res) => {
   const defaultAspectRatio = settings?.defaultAspectRatio ?? "16:9";
   const defaultDurationSec = settings?.defaultSceneDurationSec ?? 6;
 
+  const [continuity] = await db
+    .select()
+    .from(continuityTable)
+    .where(eq(continuityTable.projectId, id));
+
   const rows = scenes.map((scene) =>
     buildScenePromptEngineRow({
       scene,
       project,
       defaultAspectRatio,
       defaultDurationSec,
+      continuity: continuity ?? null,
     }),
   );
 
   res.json({
     scenes: rows,
     platforms: PLATFORMS,
+    continuityLockEnabled: !!continuity?.lockEnabled,
   });
 });
 

@@ -1,5 +1,31 @@
-import type { StoryboardScene } from "@workspace/db";
+import type { StoryboardScene, Continuity } from "@workspace/db";
 import { VISUAL_STYLES, type VisualStyleId } from "./sceneGenerator";
+
+export interface ContinuityChecklist {
+  mainCharacter: boolean;
+  outfit: boolean;
+  faceStyle: boolean;
+  world: boolean;
+  brand: boolean;
+  logo: boolean;
+  palette: boolean;
+  motifs: boolean;
+  props: boolean;
+  negative: boolean;
+}
+
+export const EMPTY_CHECKLIST: ContinuityChecklist = {
+  mainCharacter: false,
+  outfit: false,
+  faceStyle: false,
+  world: false,
+  brand: false,
+  logo: false,
+  palette: false,
+  motifs: false,
+  props: false,
+  negative: false,
+};
 
 export interface PromptBlock {
   subject: string;
@@ -138,10 +164,20 @@ export interface PromptEngineInput {
   };
   defaultAspectRatio: string;
   defaultDurationSec: number;
+  continuity?: Continuity | null;
+}
+
+interface BuildResult {
+  block: PromptBlock;
+  checklist: ContinuityChecklist;
 }
 
 export function buildPromptBlock(input: PromptEngineInput): PromptBlock {
-  const { scene, project, defaultAspectRatio, defaultDurationSec } = input;
+  return buildPromptBlockWithChecklist(input).block;
+}
+
+export function buildPromptBlockWithChecklist(input: PromptEngineInput): BuildResult {
+  const { scene, project, defaultAspectRatio, defaultDurationSec, continuity } = input;
 
   const styleId = (project.visualStyle as VisualStyleId | undefined) ?? "custom";
   const preset = VISUAL_STYLES[styleId] ?? VISUAL_STYLES.custom;
@@ -149,11 +185,11 @@ export function buildPromptBlock(input: PromptEngineInput): PromptBlock {
 
   // Use `||` so empty-string fields (which the schema allows) fall through to
   // the next candidate. `??` would only fall through on null/undefined.
-  const subject =
+  let subject =
     scene.characterAction?.trim() ||
     firstSentence(scene.description || scene.title || "Performer in frame");
 
-  const setting = scene.environment?.trim() || scene.location || "an evocative location";
+  let setting = scene.environment?.trim() || scene.location || "an evocative location";
 
   // If a scene has degenerate timing (end <= start), fall back to the
   // settings-provided default duration before clamping into the platform-safe
@@ -165,22 +201,97 @@ export function buildPromptBlock(input: PromptEngineInput): PromptBlock {
   const moodParts = [scene.emotionalPurpose?.trim(), project.mood?.trim()].filter(Boolean);
   const mood = moodParts.length > 0 ? moodParts.join(" / ") : "cinematic, kinetic";
 
-  const visualStyleParts = [styleLabel, project.brandDirection?.trim()].filter(Boolean);
-  const visualStyle = visualStyleParts.join(" — ");
+  let visualStyle = [styleLabel, project.brandDirection?.trim()].filter(Boolean).join(" — ");
+  let colorPalette = scene.colorPalette;
+  let negativePrompt = NEGATIVE_BASE;
 
-  return {
+  // Continuity weave — only apply when explicitly locked. Without lock, the
+  // continuity row is informational only and never alters generated prompts.
+  // Each token is checked against the existing field with a case-insensitive
+  // substring test before being prepended/appended, which keeps generation
+  // idempotent: running through this function after an "Apply Continuity to
+  // All Scenes" pass (which bakes the same tokens into the scene record) will
+  // not produce duplicated continuity prefixes.
+  const checklist: ContinuityChecklist = { ...EMPTY_CHECKLIST };
+  if (continuity?.lockEnabled) {
+    const has = (haystack: string, needle: string) => {
+      const n = needle.trim();
+      if (!n) return false;
+      return haystack.toLowerCase().includes(n.toLowerCase());
+    };
+
+    const charTokens = [
+      continuity.mainCharacter.trim(),
+      continuity.outfit.trim() ? `wearing ${continuity.outfit.trim()}` : "",
+      continuity.faceStyle.trim() ? `face: ${continuity.faceStyle.trim()}` : "",
+      continuity.vehicleProps.trim() ? `with ${continuity.vehicleProps.trim()}` : "",
+    ].filter(Boolean);
+    const missingCharTokens = charTokens.filter((t) => !has(subject, t));
+    if (missingCharTokens.length > 0) {
+      const prefix = missingCharTokens.join(", ");
+      subject = subject ? `${prefix} — ${subject}` : prefix;
+    }
+    checklist.mainCharacter = !!continuity.mainCharacter.trim();
+    checklist.outfit = !!continuity.outfit.trim();
+    checklist.faceStyle = !!continuity.faceStyle.trim();
+    checklist.props = !!continuity.vehicleProps.trim();
+
+    const worldText = continuity.locationWorld.trim();
+    const rulesText = continuity.environmentRules.trim();
+    const settingTokens: string[] = [];
+    if (worldText && !has(setting, worldText)) settingTokens.push(worldText);
+    if (rulesText && !has(setting, rulesText)) settingTokens.push(`rules: ${rulesText}`);
+    if (settingTokens.length > 0) {
+      const fragment = settingTokens.join(" — ");
+      setting = setting ? `${fragment} — ${setting}` : fragment;
+    }
+    // World checklist reflects either world OR rules being woven so
+    // env-rules-only continuity still registers as "world" coverage.
+    checklist.world = !!(worldText || rulesText);
+
+    const styleAdditions: string[] = [];
+    if (continuity.brandStyle.trim() && !has(visualStyle, continuity.brandStyle.trim())) {
+      styleAdditions.push(continuity.brandStyle.trim());
+    }
+    if (continuity.logoSymbol.trim() && !has(visualStyle, continuity.logoSymbol.trim())) {
+      styleAdditions.push(`logo: ${continuity.logoSymbol.trim()}`);
+    }
+    if (continuity.recurringMotifs.trim() && !has(visualStyle, continuity.recurringMotifs.trim())) {
+      styleAdditions.push(`motifs: ${continuity.recurringMotifs.trim()}`);
+    }
+    if (styleAdditions.length > 0) {
+      visualStyle = [visualStyle, ...styleAdditions].filter(Boolean).join(" — ");
+    }
+    checklist.brand = !!continuity.brandStyle.trim();
+    checklist.logo = !!continuity.logoSymbol.trim();
+    checklist.motifs = !!continuity.recurringMotifs.trim();
+
+    if (continuity.colorPalette.trim()) {
+      colorPalette = continuity.colorPalette.trim();
+      checklist.palette = true;
+    }
+
+    const negLib = continuity.negativePromptLibrary.trim();
+    if (negLib && !has(negativePrompt, negLib)) {
+      negativePrompt = `${negativePrompt}, ${negLib}`;
+    }
+    checklist.negative = !!negLib;
+  }
+
+  const block: PromptBlock = {
     subject,
     setting,
     visualStyle,
     cameraMotion: scene.cameraMovement,
     lighting: scene.lighting,
     mood,
-    colorPalette: scene.colorPalette,
+    colorPalette,
     aspectRatio: defaultAspectRatio || "16:9",
-    negativePrompt: NEGATIVE_BASE,
+    negativePrompt,
     durationSec: durationSuggested,
     transition: transitionFor(scene.motionIntensity || "medium"),
   };
+  return { block, checklist };
 }
 
 function dur(b: PromptBlock) {
@@ -284,10 +395,11 @@ export interface ScenePromptEngineRow {
   cameraMovement: string;
   block: PromptBlock;
   platforms: Record<PlatformId, string>;
+  continuityChecklist: ContinuityChecklist;
 }
 
 export function buildScenePromptEngineRow(input: PromptEngineInput): ScenePromptEngineRow {
-  const block = buildPromptBlock(input);
+  const { block, checklist } = buildPromptBlockWithChecklist(input);
   const platforms = {} as Record<PlatformId, string>;
   for (const p of PLATFORMS) {
     platforms[p.id] = formatForPlatform(p.id, block, input.scene);
@@ -302,5 +414,6 @@ export function buildScenePromptEngineRow(input: PromptEngineInput): ScenePrompt
     cameraMovement: input.scene.cameraMovement,
     block,
     platforms,
+    continuityChecklist: checklist,
   };
 }

@@ -722,6 +722,64 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExportRecord"
 
+  /projects/{id}/continuity:
+    get:
+      operationId: getContinuity
+      tags: [continuity]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Continuity"
+    put:
+      operationId: updateContinuity
+      tags: [continuity]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContinuityInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Continuity"
+
+  /projects/{id}/continuity/apply:
+    post:
+      operationId: applyContinuity
+      tags: [continuity]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContinuityApplyResult"
+
   /projects/{id}/prompt-engine:
     get:
       operationId: getPromptEngine
@@ -1222,6 +1280,88 @@ components:
           type: string
           enum: [json, txt, production_plan]
 
+    Continuity:
+      type: object
+      required:
+        - projectId
+        - mainCharacter
+        - outfit
+        - faceStyle
+        - vehicleProps
+        - logoSymbol
+        - brandStyle
+        - colorPalette
+        - locationWorld
+        - environmentRules
+        - recurringMotifs
+        - negativePromptLibrary
+        - lockEnabled
+        - updatedAt
+      properties:
+        projectId: { type: string }
+        mainCharacter: { type: string }
+        outfit: { type: string }
+        faceStyle: { type: string }
+        vehicleProps: { type: string }
+        logoSymbol: { type: string }
+        brandStyle: { type: string }
+        colorPalette: { type: string }
+        locationWorld: { type: string }
+        environmentRules: { type: string }
+        recurringMotifs: { type: string }
+        negativePromptLibrary: { type: string }
+        lockEnabled: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+
+    UpdateContinuityInput:
+      type: object
+      properties:
+        mainCharacter: { type: string }
+        outfit: { type: string }
+        faceStyle: { type: string }
+        vehicleProps: { type: string }
+        logoSymbol: { type: string }
+        brandStyle: { type: string }
+        colorPalette: { type: string }
+        locationWorld: { type: string }
+        environmentRules: { type: string }
+        recurringMotifs: { type: string }
+        negativePromptLibrary: { type: string }
+        lockEnabled: { type: boolean }
+
+    ContinuityApplyResult:
+      type: object
+      required: [updatedSceneCount, skippedLockedCount, totalScenes]
+      properties:
+        updatedSceneCount: { type: integer }
+        skippedLockedCount: { type: integer }
+        totalScenes: { type: integer }
+
+    ContinuityChecklist:
+      type: object
+      required:
+        - mainCharacter
+        - outfit
+        - faceStyle
+        - world
+        - brand
+        - logo
+        - palette
+        - motifs
+        - props
+        - negative
+      properties:
+        mainCharacter: { type: boolean }
+        outfit: { type: boolean }
+        faceStyle: { type: boolean }
+        world: { type: boolean }
+        brand: { type: boolean }
+        logo: { type: boolean }
+        palette: { type: boolean }
+        motifs: { type: boolean }
+        props: { type: boolean }
+        negative: { type: boolean }
+
     PlatformId:
       type: string
       enum:
@@ -1311,6 +1451,7 @@ components:
         - cameraMovement
         - block
         - platforms
+        - continuityChecklist
       properties:
         sceneId: { type: string }
         sceneIndex: { type: integer }
@@ -1321,10 +1462,11 @@ components:
         cameraMovement: { type: string }
         block: { $ref: "#/components/schemas/PromptBlock" }
         platforms: { $ref: "#/components/schemas/PlatformPromptMap" }
+        continuityChecklist: { $ref: "#/components/schemas/ContinuityChecklist" }
 
     PromptEngineResponse:
       type: object
-      required: [scenes, platforms]
+      required: [scenes, platforms, continuityLockEnabled]
       properties:
         scenes:
           type: array
@@ -1334,6 +1476,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PlatformMeta"
+        continuityLockEnabled: { type: boolean }
 
     Settings:
       type: object

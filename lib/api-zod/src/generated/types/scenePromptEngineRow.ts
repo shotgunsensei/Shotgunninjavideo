@@ -5,6 +5,7 @@
  * Shotgun Ninjas Video Engine API
  * OpenAPI spec version: 0.1.0
  */
+import type { ContinuityChecklist } from "./continuityChecklist";
 import type { PlatformPromptMap } from "./platformPromptMap";
 import type { PromptBlock } from "./promptBlock";
 
@@ -18,4 +19,5 @@ export interface ScenePromptEngineRow {
   cameraMovement: string;
   block: PromptBlock;
   platforms: PlatformPromptMap;
+  continuityChecklist: ContinuityChecklist;
 }

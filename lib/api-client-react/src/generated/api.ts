@@ -20,6 +20,8 @@ import type {
   ActivityItem,
   AnalysisResult,
   AudioFile,
+  Continuity,
+  ContinuityApplyResult,
   CreateExportInput,
   CreateProjectInput,
   CreateSceneInput,
@@ -41,6 +43,7 @@ import type {
   StoryboardScene,
   SubmitAnalysisInput,
   TimelineSegment,
+  UpdateContinuityInput,
   UpdateLyricLineInput,
   UpdateProjectInput,
   UpdatePromptInput,
@@ -2831,6 +2834,245 @@ export const useCreateExport = <
   TContext
 > => {
   return useMutation(getCreateExportMutationOptions(options));
+};
+
+export const getGetContinuityUrl = (id: string) => {
+  return `/api/projects/${id}/continuity`;
+};
+
+export const getContinuity = async (
+  id: string,
+  options?: RequestInit,
+): Promise<Continuity> => {
+  return customFetch<Continuity>(getGetContinuityUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetContinuityQueryKey = (id: string) => {
+  return [`/api/projects/${id}/continuity`] as const;
+};
+
+export const getGetContinuityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getContinuity>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getContinuity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetContinuityQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getContinuity>>> = ({
+    signal,
+  }) => getContinuity(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getContinuity>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetContinuityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getContinuity>>
+>;
+export type GetContinuityQueryError = ErrorType<unknown>;
+
+export function useGetContinuity<
+  TData = Awaited<ReturnType<typeof getContinuity>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getContinuity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetContinuityQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getUpdateContinuityUrl = (id: string) => {
+  return `/api/projects/${id}/continuity`;
+};
+
+export const updateContinuity = async (
+  id: string,
+  updateContinuityInput: UpdateContinuityInput,
+  options?: RequestInit,
+): Promise<Continuity> => {
+  return customFetch<Continuity>(getUpdateContinuityUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateContinuityInput),
+  });
+};
+
+export const getUpdateContinuityMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateContinuity>>,
+    TError,
+    { id: string; data: BodyType<UpdateContinuityInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateContinuity>>,
+  TError,
+  { id: string; data: BodyType<UpdateContinuityInput> },
+  TContext
+> => {
+  const mutationKey = ["updateContinuity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateContinuity>>,
+    { id: string; data: BodyType<UpdateContinuityInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateContinuity(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateContinuityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateContinuity>>
+>;
+export type UpdateContinuityMutationBody = BodyType<UpdateContinuityInput>;
+export type UpdateContinuityMutationError = ErrorType<unknown>;
+
+export const useUpdateContinuity = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateContinuity>>,
+    TError,
+    { id: string; data: BodyType<UpdateContinuityInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateContinuity>>,
+  TError,
+  { id: string; data: BodyType<UpdateContinuityInput> },
+  TContext
+> => {
+  return useMutation(getUpdateContinuityMutationOptions(options));
+};
+
+export const getApplyContinuityUrl = (id: string) => {
+  return `/api/projects/${id}/continuity/apply`;
+};
+
+export const applyContinuity = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ContinuityApplyResult> => {
+  return customFetch<ContinuityApplyResult>(getApplyContinuityUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getApplyContinuityMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applyContinuity>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applyContinuity>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["applyContinuity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applyContinuity>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return applyContinuity(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplyContinuityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof applyContinuity>>
+>;
+
+export type ApplyContinuityMutationError = ErrorType<unknown>;
+
+export const useApplyContinuity = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applyContinuity>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof applyContinuity>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getApplyContinuityMutationOptions(options));
 };
 
 export const getGetPromptEngineUrl = (id: string) => {

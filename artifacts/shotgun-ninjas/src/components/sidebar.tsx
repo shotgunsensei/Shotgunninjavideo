@@ -11,6 +11,7 @@ import {
   Download,
   Mic2,
   Wand2,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
@@ -39,6 +40,7 @@ export function Sidebar() {
     { href: `/projects/${projectId}/analysis`, label: "Analyze", icon: Activity },
     { href: `/projects/${projectId}/lyrics`, label: "Lyrics", icon: Mic2 },
     { href: `/projects/${projectId}/storyboard`, label: "Storyboard", icon: Film },
+    { href: `/projects/${projectId}/continuity`, label: "Continuity", icon: ShieldCheck },
     { href: `/projects/${projectId}/prompt-engine`, label: "Prompt Engine", icon: Wand2 },
     { href: `/projects/${projectId}/export`, label: "Export", icon: Download },
   ] : [];

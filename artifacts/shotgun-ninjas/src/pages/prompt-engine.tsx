@@ -13,6 +13,8 @@ import {
   Image as ImageIcon,
   Scissors,
   RefreshCw,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -286,9 +288,79 @@ function PlatformCard({ platform, text, sceneIndex }: PlatformCardProps) {
 interface SceneCardProps {
   row: ScenePromptEngineRow;
   platforms: PlatformMeta[];
+  continuityLockEnabled: boolean;
 }
 
-function SceneCard({ row, platforms }: SceneCardProps) {
+const CHECKLIST_ITEMS: Array<{ key: keyof ScenePromptEngineRow["continuityChecklist"]; label: string }> = [
+  { key: "mainCharacter", label: "Character" },
+  { key: "outfit", label: "Outfit" },
+  { key: "faceStyle", label: "Face" },
+  { key: "props", label: "Props" },
+  { key: "world", label: "World" },
+  { key: "brand", label: "Brand" },
+  { key: "logo", label: "Logo" },
+  { key: "palette", label: "Palette" },
+  { key: "motifs", label: "Motifs" },
+  { key: "negative", label: "Negative" },
+];
+
+function ContinuityChecklistView({
+  checklist,
+  lockEnabled,
+}: {
+  checklist: ScenePromptEngineRow["continuityChecklist"];
+  lockEnabled: boolean;
+}) {
+  return (
+    <div
+      className="border border-border/40 bg-background/40 p-3 space-y-2"
+      data-testid="continuity-checklist"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground">
+          Continuity
+        </span>
+        {lockEnabled ? (
+          <Badge
+            variant="default"
+            className="rounded-none font-mono text-[10px] uppercase tracking-widest gap-1"
+          >
+            <ShieldCheck className="w-3 h-3" /> Locked
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="rounded-none font-mono text-[10px] uppercase tracking-widest gap-1 text-muted-foreground"
+          >
+            <ShieldOff className="w-3 h-3" /> Off
+          </Badge>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        {CHECKLIST_ITEMS.map(({ key, label }) => {
+          const on = checklist[key];
+          return (
+            <div
+              key={key}
+              className="flex items-center gap-1.5 text-[10px] font-mono uppercase"
+              data-testid={`checklist-item-${key}`}
+              data-on={on ? "true" : "false"}
+            >
+              {on ? (
+                <Check className="w-3 h-3 text-primary" />
+              ) : (
+                <span className="w-3 h-3 inline-block border border-border/50" />
+              )}
+              <span className={on ? "text-foreground" : "text-muted-foreground/60"}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SceneCard({ row, platforms, continuityLockEnabled }: SceneCardProps) {
   const grouped = useMemo(() => {
     const g: Record<PlatformKind, PlatformMeta[]> = { video: [], image: [], editing: [] };
     for (const p of platforms) g[p.kind as PlatformKind].push(p);
@@ -334,7 +406,13 @@ function SceneCard({ row, platforms }: SceneCardProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <StructuredBlock block={row.block} />
+        <div className="space-y-4">
+          <StructuredBlock block={row.block} />
+          <ContinuityChecklistView
+            checklist={row.continuityChecklist}
+            lockEnabled={continuityLockEnabled}
+          />
+        </div>
         <div>
           <Tabs defaultValue="video" className="w-full">
             <TabsList
@@ -402,6 +480,7 @@ export default function PromptEnginePage() {
   const projectTitle = project?.title ?? "project";
   const scenes = engine?.scenes ?? [];
   const platforms = engine?.platforms ?? [];
+  const continuityLockEnabled = engine?.continuityLockEnabled ?? false;
 
   const downloadTxt = () => {
     if (scenes.length === 0) return;
@@ -528,6 +607,25 @@ export default function PromptEnginePage() {
           <p className="text-muted-foreground font-mono text-sm mt-1 uppercase tracking-wider">
             {scenes.length} scenes × {platforms.length} platforms
           </p>
+          <div className="mt-3">
+            {continuityLockEnabled ? (
+              <Link
+                href={`/projects/${projectId}/continuity`}
+                className="inline-flex items-center gap-2 px-3 py-1 border border-primary/40 bg-primary/10 text-primary uppercase tracking-widest text-[10px] font-mono hover:bg-primary/20"
+                data-testid="badge-prompt-continuity-locked"
+              >
+                <ShieldCheck className="w-3 h-3" /> Continuity LOCKED — applied to every prompt
+              </Link>
+            ) : (
+              <Link
+                href={`/projects/${projectId}/continuity`}
+                className="inline-flex items-center gap-2 px-3 py-1 border border-border/50 bg-background/40 text-muted-foreground uppercase tracking-widest text-[10px] font-mono hover:text-foreground"
+                data-testid="badge-prompt-continuity-off"
+              >
+                <ShieldOff className="w-3 h-3" /> Continuity OFF — configure
+              </Link>
+            )}
+          </div>
         </div>
         <Button
           variant="outline"
@@ -579,7 +677,12 @@ export default function PromptEnginePage() {
 
       <div className="space-y-6">
         {scenes.map((row) => (
-          <SceneCard key={row.sceneId} row={row} platforms={platforms} />
+          <SceneCard
+            key={row.sceneId}
+            row={row}
+            platforms={platforms}
+            continuityLockEnabled={continuityLockEnabled}
+          />
         ))}
       </div>
     </div>

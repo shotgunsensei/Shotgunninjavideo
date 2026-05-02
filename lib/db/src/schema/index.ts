@@ -3,6 +3,7 @@ export * from "./audio";
 export * from "./timeline";
 export * from "./storyboard";
 export * from "./lyrics";
+export * from "./continuity";
 export * from "./prompts";
 export * from "./exports";
 export * from "./activity";
