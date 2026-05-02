@@ -58,7 +58,7 @@ export default function Export() {
     URL.revokeObjectURL(url);
   };
 
-  const isReady = ["storyboarded", "prompted", "exported"].includes(project?.status || "");
+  const isReady = ["prompted", "exported"].includes(project?.status || "");
 
   if (!isReady) {
     return (

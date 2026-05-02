@@ -2,7 +2,7 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like Sondo). Users upload a song, the app analyzes it, generates a beat-synced cinematic storyboard, scene prompts, and exports a structured production plan.
 
 ## Stack
 
@@ -10,11 +10,35 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
+- **Frontend**: React + Vite + Tailwind v4 + shadcn/ui + wouter + TanStack Query + framer-motion + recharts
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+
+## Artifacts
+
+- `artifacts/shotgun-ninjas` (`/`) — React frontend, the main user-facing app
+- `artifacts/api-server` (`/api`) — Express API powering all features
+- `artifacts/mockup-sandbox` (`/__mockup`) — design canvas
+
+## Data model (lib/db/src/schema)
+
+- `projects` — main project record (title, artist, genre, mood, visualDirection, status, bpm, key, durationSec)
+- `audio_files` — uploaded audio metadata per project
+- `analysis` + `timeline_segments` — mock audio analysis (BPM/key/energy/loudness, segments with section + intensity + emotion, emotional map valence/arousal points)
+- `storyboard_scenes` — per-segment cinematic scene plan (shot type, camera, location, lighting, palette, wardrobe)
+- `prompts` — AI video generation prompt per scene (model, text, negative prompt, aspect ratio, duration)
+- `exports` — generated JSON / TXT / production_plan exports
+- `activity` — recent activity feed
+- `settings` — single-row global settings (default model, aspect ratio, scene duration, theme, creator info)
+
+## Workflow
+
+Upload song → analyze audio (mock, deterministic per project) → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+
+A demo project ("Black Velvet Static" by RONIN/X) is seeded on first server start so the dashboard is never empty.
 
 ## Key Commands
 

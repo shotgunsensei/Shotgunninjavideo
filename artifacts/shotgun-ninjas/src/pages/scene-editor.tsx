@@ -111,7 +111,26 @@ export default function SceneEditor() {
     return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
 
-  if (!scene) return <div>Scene not found</div>;
+  if (!scene) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto mt-24 p-8 border border-dashed border-border/50 bg-card/10 space-y-4">
+        <h2 className="text-2xl font-bold uppercase tracking-wider">Scene Not Found</h2>
+        <p className="text-sm text-muted-foreground font-mono">
+          This scene may have been regenerated or removed. Return to the storyboard to pick a current scene.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button asChild className="rounded-none uppercase tracking-widest">
+            <Link href={`/projects/${projectId}/storyboard`}>
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Storyboard
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-none uppercase tracking-widest">
+            <Link href={`/projects/${projectId}`}>Project Hub</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
