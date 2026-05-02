@@ -59,7 +59,7 @@ export default function SceneEditor() {
 
   const handleSaveScene = () => {
     updateScene.mutate({
-      id: sceneId,
+      sceneId: sceneId,
       data: {
         title: sceneForm.title,
         description: sceneForm.description,
@@ -82,7 +82,7 @@ export default function SceneEditor() {
   const handleSavePrompt = () => {
     if (!prompt) return;
     updatePrompt.mutate({
-      id: prompt.id,
+      promptId: prompt.id,
       data: {
         text: promptForm.text,
         negativePrompt: promptForm.negativePrompt,
