@@ -56,7 +56,12 @@ The analysis screen (`pages/analysis.tsx`) drives the deep-thinking flow via `ru
 
 Layout (`components/layout.tsx`) collapses the sidebar into a Sheet on mobile (<md) for narrow viewports.
 
-A demo project ("Black Velvet Static" by RONIN/X) is seeded on first server start so the dashboard is never empty.
+Two demo projects are seeded idempotently on every server start (`artifacts/api-server/src/lib/seed.ts`):
+
+- **"Black Velvet Static" by RONIN/X** — auto-generated cyberpunk_uprising demo (198 s, 124 BPM) showing the standard generative path.
+- **"Shotgun Ninjas Rise" by Shotgun Ninjas** — hand-curated 11-plot founder/uprising template (219 s = 03:39, 96 BPM, A min, gritty_urban + crimson neon + rooftops). Each scene is a labeled "Plot 01 — The Empty Workshop" through "Plot 11 — Rise", with bespoke title, description, location, lighting, palette, wardrobe, character action, and AI prompt; LRC-timed sample lyrics (`SN_LYRICS`) are parsed and snapped into the matching scene. Designed to double as the starting template for new Shotgun Ninjas music videos.
+
+Each demo seed checks for its own title before inserting, so the seeder is safe to run on every boot and can add new built-in templates without disturbing existing ones.
 
 ## Key Commands
 
