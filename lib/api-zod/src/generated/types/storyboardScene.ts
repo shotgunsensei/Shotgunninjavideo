@@ -22,4 +22,10 @@ export interface StoryboardScene {
   colorPalette: string;
   wardrobe?: string;
   notes?: string;
+  environment: string;
+  characterAction: string;
+  emotionalPurpose: string;
+  motionIntensity: string;
+  aiPrompt: string;
+  locked: boolean;
 }

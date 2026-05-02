@@ -358,6 +358,39 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateStoryboardInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryboardScene"
+
+  /projects/{id}/storyboard/scenes:
+    post:
+      operationId: addScene
+      tags: [storyboard]
+      summary: Add a new storyboard scene (optionally after a given index)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSceneInput"
       responses:
         "201":
           description: Created
@@ -391,6 +424,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StoryboardScene"
+    delete:
+      operationId: deleteScene
+      tags: [storyboard]
+      parameters:
+        - in: path
+          name: sceneId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryboardScene"
+
+  /storyboard/{sceneId}/regenerate:
+    post:
+      operationId: regenerateScene
+      tags: [storyboard]
+      summary: Regenerate the contents of a single scene (respects locked unless force=true)
+      parameters:
+        - in: path
+          name: sceneId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryboardScene"
+
+  /storyboard/{sceneId}/duplicate:
+    post:
+      operationId: duplicateScene
+      tags: [storyboard]
+      summary: Duplicate a scene immediately after itself
+      parameters:
+        - in: path
+          name: sceneId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryboardScene"
 
   /projects/{id}/prompts:
     get:
@@ -577,6 +668,9 @@ components:
         genre: { type: string }
         mood: { type: string }
         visualDirection: { type: string }
+        visualStyle: { type: string }
+        brandDirection: { type: string }
+        lyrics: { type: string }
         status:
           type: string
           enum: [draft, uploaded, analyzed, storyboarded, prompted, exported]
@@ -609,6 +703,9 @@ components:
         genre: { type: string }
         mood: { type: string }
         visualDirection: { type: string }
+        visualStyle: { type: string }
+        brandDirection: { type: string }
+        lyrics: { type: string }
 
     UpdateProjectInput:
       type: object
@@ -618,6 +715,9 @@ components:
         genre: { type: string }
         mood: { type: string }
         visualDirection: { type: string }
+        visualStyle: { type: string }
+        brandDirection: { type: string }
+        lyrics: { type: string }
         status:
           type: string
           enum: [draft, uploaded, analyzed, storyboarded, prompted, exported]
@@ -780,6 +880,12 @@ components:
         - location
         - lighting
         - colorPalette
+        - environment
+        - characterAction
+        - emotionalPurpose
+        - motionIntensity
+        - aiPrompt
+        - locked
       properties:
         id: { type: string }
         projectId: { type: string }
@@ -796,6 +902,12 @@ components:
         colorPalette: { type: string }
         wardrobe: { type: string }
         notes: { type: string }
+        environment: { type: string }
+        characterAction: { type: string }
+        emotionalPurpose: { type: string }
+        motionIntensity: { type: string }
+        aiPrompt: { type: string }
+        locked: { type: boolean }
 
     UpdateSceneInput:
       type: object
@@ -809,6 +921,29 @@ components:
         colorPalette: { type: string }
         wardrobe: { type: string }
         notes: { type: string }
+        environment: { type: string }
+        characterAction: { type: string }
+        emotionalPurpose: { type: string }
+        motionIntensity: { type: string }
+        aiPrompt: { type: string }
+        locked: { type: boolean }
+
+    GenerateStoryboardInput:
+      type: object
+      properties:
+        visualStyle: { type: string }
+        brandDirection: { type: string }
+        lyrics: { type: string }
+        force:
+          type: boolean
+          description: When true, regenerate even locked scenes. Default false.
+
+    CreateSceneInput:
+      type: object
+      properties:
+        afterIndex:
+          type: integer
+          description: Insert immediately after this index. If omitted, scene is appended at the end.
 
     Prompt:
       type: object

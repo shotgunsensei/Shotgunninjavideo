@@ -13,5 +13,8 @@ export interface UpdateProjectInput {
   genre?: string;
   mood?: string;
   visualDirection?: string;
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
   status?: UpdateProjectInputStatus;
 }

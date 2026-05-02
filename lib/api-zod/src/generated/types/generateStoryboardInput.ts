@@ -6,14 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateProjectInput {
-  /** @minLength 1 */
-  title: string;
-  artist?: string;
-  genre?: string;
-  mood?: string;
-  visualDirection?: string;
+export interface GenerateStoryboardInput {
   visualStyle?: string;
   brandDirection?: string;
   lyrics?: string;
+  /** When true, regenerate even locked scenes. Default false. */
+  force?: boolean;
 }

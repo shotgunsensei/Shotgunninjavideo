@@ -57,6 +57,9 @@ export const ListProjectsResponseItem = zod.object({
   genre: zod.string().optional(),
   mood: zod.string().optional(),
   visualDirection: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
   status: zod.enum([
     "draft",
     "uploaded",
@@ -87,6 +90,9 @@ export const CreateProjectBody = zod.object({
   genre: zod.string().optional(),
   mood: zod.string().optional(),
   visualDirection: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
 });
 
 export const GetProjectParams = zod.object({
@@ -101,6 +107,9 @@ export const GetProjectResponse = zod
     genre: zod.string().optional(),
     mood: zod.string().optional(),
     visualDirection: zod.string().optional(),
+    visualStyle: zod.string().optional(),
+    brandDirection: zod.string().optional(),
+    lyrics: zod.string().optional(),
     status: zod.enum([
       "draft",
       "uploaded",
@@ -185,6 +194,9 @@ export const UpdateProjectBody = zod.object({
   genre: zod.string().optional(),
   mood: zod.string().optional(),
   visualDirection: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
   status: zod
     .enum([
       "draft",
@@ -204,6 +216,9 @@ export const UpdateProjectResponse = zod.object({
   genre: zod.string().optional(),
   mood: zod.string().optional(),
   visualDirection: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
   status: zod.enum([
     "draft",
     "uploaded",
@@ -543,6 +558,12 @@ export const GetStoryboardResponseItem = zod.object({
   colorPalette: zod.string(),
   wardrobe: zod.string().optional(),
   notes: zod.string().optional(),
+  environment: zod.string(),
+  characterAction: zod.string(),
+  emotionalPurpose: zod.string(),
+  motionIntensity: zod.string(),
+  aiPrompt: zod.string(),
+  locked: zod.boolean(),
 });
 export const GetStoryboardResponse = zod.array(GetStoryboardResponseItem);
 
@@ -551,6 +572,32 @@ export const GetStoryboardResponse = zod.array(GetStoryboardResponseItem);
  */
 export const GenerateStoryboardParams = zod.object({
   id: zod.coerce.string(),
+});
+
+export const GenerateStoryboardBody = zod.object({
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
+  force: zod
+    .boolean()
+    .optional()
+    .describe("When true, regenerate even locked scenes. Default false."),
+});
+
+/**
+ * @summary Add a new storyboard scene (optionally after a given index)
+ */
+export const AddSceneParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const AddSceneBody = zod.object({
+  afterIndex: zod
+    .number()
+    .optional()
+    .describe(
+      "Insert immediately after this index. If omitted, scene is appended at the end.",
+    ),
 });
 
 export const UpdateSceneParams = zod.object({
@@ -567,6 +614,12 @@ export const UpdateSceneBody = zod.object({
   colorPalette: zod.string().optional(),
   wardrobe: zod.string().optional(),
   notes: zod.string().optional(),
+  environment: zod.string().optional(),
+  characterAction: zod.string().optional(),
+  emotionalPurpose: zod.string().optional(),
+  motionIntensity: zod.string().optional(),
+  aiPrompt: zod.string().optional(),
+  locked: zod.boolean().optional(),
 });
 
 export const UpdateSceneResponse = zod.object({
@@ -585,6 +638,79 @@ export const UpdateSceneResponse = zod.object({
   colorPalette: zod.string(),
   wardrobe: zod.string().optional(),
   notes: zod.string().optional(),
+  environment: zod.string(),
+  characterAction: zod.string(),
+  emotionalPurpose: zod.string(),
+  motionIntensity: zod.string(),
+  aiPrompt: zod.string(),
+  locked: zod.boolean(),
+});
+
+export const DeleteSceneParams = zod.object({
+  sceneId: zod.coerce.string(),
+});
+
+export const DeleteSceneResponseItem = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  segmentId: zod.string().optional(),
+  index: zod.number(),
+  startSec: zod.number(),
+  endSec: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  shotType: zod.string(),
+  cameraMovement: zod.string(),
+  location: zod.string(),
+  lighting: zod.string(),
+  colorPalette: zod.string(),
+  wardrobe: zod.string().optional(),
+  notes: zod.string().optional(),
+  environment: zod.string(),
+  characterAction: zod.string(),
+  emotionalPurpose: zod.string(),
+  motionIntensity: zod.string(),
+  aiPrompt: zod.string(),
+  locked: zod.boolean(),
+});
+export const DeleteSceneResponse = zod.array(DeleteSceneResponseItem);
+
+/**
+ * @summary Regenerate the contents of a single scene (respects locked unless force=true)
+ */
+export const RegenerateSceneParams = zod.object({
+  sceneId: zod.coerce.string(),
+});
+
+export const RegenerateSceneResponse = zod.object({
+  id: zod.string(),
+  projectId: zod.string(),
+  segmentId: zod.string().optional(),
+  index: zod.number(),
+  startSec: zod.number(),
+  endSec: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  shotType: zod.string(),
+  cameraMovement: zod.string(),
+  location: zod.string(),
+  lighting: zod.string(),
+  colorPalette: zod.string(),
+  wardrobe: zod.string().optional(),
+  notes: zod.string().optional(),
+  environment: zod.string(),
+  characterAction: zod.string(),
+  emotionalPurpose: zod.string(),
+  motionIntensity: zod.string(),
+  aiPrompt: zod.string(),
+  locked: zod.boolean(),
+});
+
+/**
+ * @summary Duplicate a scene immediately after itself
+ */
+export const DuplicateSceneParams = zod.object({
+  sceneId: zod.coerce.string(),
 });
 
 export const GetPromptsParams = zod.object({

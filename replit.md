@@ -25,10 +25,10 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 
 ## Data model (lib/db/src/schema)
 
-- `projects` — main project record (title, artist, genre, mood, visualDirection, status, bpm, key, durationSec)
+- `projects` — main project record (title, artist, genre, mood, visualDirection, **visualStyle, brandDirection, lyrics**, status, bpm, key, durationSec)
 - `audio_files` — uploaded audio metadata per project
 - `analysis` + `timeline_segments` — mock audio analysis (BPM/key/energy/loudness, segments with section + intensity + emotion, emotional map valence/arousal points)
-- `storyboard_scenes` — per-segment cinematic scene plan (shot type, camera, location, lighting, palette, wardrobe)
+- `storyboard_scenes` — per-segment cinematic scene plan (shot type, camera, location, lighting, palette, wardrobe, **environment, characterAction, emotionalPurpose, motionIntensity, aiPrompt, locked**)
 - `prompts` — AI video generation prompt per scene (model, text, negative prompt, aspect ratio, duration)
 - `exports` — generated JSON / TXT / production_plan exports
 - `activity` — recent activity feed
@@ -37,6 +37,13 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 ## Workflow
 
 Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+
+The Storyboard page (`pages/storyboard.tsx`) lets the director:
+- Pick from 10 visual style presets (cyberpunk_uprising, gritty_urban, anime_cinematic, dark_industrial, motivational_founder, street_mv, luxury_cinematic, horror_energy, scifi_neon, custom) defined in `artifacts/api-server/src/lib/sceneGenerator.ts`.
+- Add brand direction text and optional lyrics that steer environment/wardrobe/action arrays plus a per-scene AI prompt.
+- Per-scene actions: regenerate-all (preserves locked), force regenerate-all (rebuilds everything), regenerate-one (refuses with 409 unless `?force=true`), edit (rich dialog with all fields), duplicate (inserts directly after with " (Copy)" suffix), delete (with confirmation), insert between scenes, append at end, and lock toggle.
+- Locked scenes survive batch regeneration regardless of whether they were originally tied to a timeline segment or manually added (segmentId-null floats).
+- All multi-row index-shifting operations (regenerate-all, add, duplicate, delete) run inside drizzle transactions to prevent index drift under concurrency.
 
 The analysis screen (`pages/analysis.tsx`) drives the deep-thinking flow via `runDeepThinking(useMock)`:
 - Stages 1–2 are powered by real Web Audio analysis when an audio file is cached locally (IndexedDB), with stage substep progress driven by `analyzeAudioFile` callbacks.

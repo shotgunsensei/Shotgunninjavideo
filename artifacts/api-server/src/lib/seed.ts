@@ -11,7 +11,8 @@ import {
   activityTable,
   settingsTable,
 } from "@workspace/db";
-import { buildMockAnalysis, buildStoryboardScene, buildPromptText } from "./mockAnalysis";
+import { buildMockAnalysis, buildPromptText } from "./mockAnalysis";
+import { generateScene } from "./sceneGenerator";
 import { logger } from "./logger";
 
 export async function seedIfEmpty() {
@@ -74,7 +75,21 @@ export async function seedIfEmpty() {
 
     const scenes = await db
       .insert(storyboardScenesTable)
-      .values(segs.map((s) => buildStoryboardScene(project.id, s, project.id)))
+      .values(
+        segs.map((s) =>
+          generateScene({
+            projectId: project.id,
+            segment: s,
+            totalSegments: segs.length,
+            songTitle: project.title,
+            artistName: project.artist,
+            visualStyle: "cyberpunk_uprising",
+            brandDirection: "Defiant industrial pop with crimson neon iconography",
+            lyrics: null,
+            seed: project.id,
+          }),
+        ),
+      )
       .returning();
 
     await db.insert(promptsTable).values(

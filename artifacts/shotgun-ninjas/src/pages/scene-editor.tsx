@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ArrowLeft, Save, Sparkles, Image as ImageIcon } from "lucide-react";
-import { useForm } from "react-hook-form";
+import {
+  Loader2,
+  ArrowLeft,
+  Save,
+  Sparkles,
+  Image as ImageIcon,
+  Lock,
+  Unlock,
+  Clapperboard,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,10 +74,15 @@ export default function SceneEditor() {
         shotType: sceneForm.shotType,
         cameraMovement: sceneForm.cameraMovement,
         location: sceneForm.location,
+        environment: sceneForm.environment,
+        characterAction: sceneForm.characterAction,
+        emotionalPurpose: sceneForm.emotionalPurpose,
+        motionIntensity: sceneForm.motionIntensity,
         lighting: sceneForm.lighting,
         colorPalette: sceneForm.colorPalette,
         wardrobe: sceneForm.wardrobe,
-        notes: sceneForm.notes
+        notes: sceneForm.notes,
+        aiPrompt: sceneForm.aiPrompt,
       }
     }, {
       onSuccess: () => {
@@ -77,6 +90,22 @@ export default function SceneEditor() {
         queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
       }
     });
+  };
+
+  const handleToggleLock = () => {
+    if (!scene) return;
+    updateScene.mutate(
+      { sceneId, data: { locked: !scene.locked } },
+      {
+        onSuccess: () => {
+          toast({
+            title: scene.locked ? "Scene unlocked" : "Scene locked",
+            description: scene.locked ? "Will regenerate on next batch." : "Protected from regeneration.",
+          });
+          queryClient.invalidateQueries({ queryKey: getGetStoryboardQueryKey(projectId) });
+        },
+      },
+    );
   };
 
   const handleSavePrompt = () => {
@@ -149,16 +178,36 @@ export default function SceneEditor() {
           </div>
         </div>
 
-        {!prompt && (
-          <Button 
-            onClick={handleGeneratePrompts}
-            disabled={generatePrompts.isPending}
-            className="rounded-none uppercase tracking-widest text-xs font-bold bg-accent hover:bg-accent/90"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleLock}
+            disabled={updateScene.isPending}
+            className="rounded-none uppercase tracking-widest text-[10px] h-9 border border-border/50"
+            data-testid="toggle-lock"
           >
-            {generatePrompts.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-            Generate AI Prompts
+            {scene.locked ? (
+              <>
+                <Lock className="w-3.5 h-3.5 mr-2 text-amber-400" /> Unlock
+              </>
+            ) : (
+              <>
+                <Unlock className="w-3.5 h-3.5 mr-2" /> Lock Scene
+              </>
+            )}
           </Button>
-        )}
+          {!prompt && (
+            <Button
+              onClick={handleGeneratePrompts}
+              disabled={generatePrompts.isPending}
+              className="rounded-none uppercase tracking-widest text-xs font-bold bg-accent hover:bg-accent/90"
+            >
+              {generatePrompts.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              Generate AI Prompts
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -234,9 +283,54 @@ export default function SceneEditor() {
             </div>
 
             <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Environment</Label>
+              <Input
+                value={sceneForm.environment || ''}
+                onChange={e => setSceneForm({...sceneForm, environment: e.target.value})}
+                className="rounded-none bg-background/50 border-border/50 font-mono text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Character Action</Label>
+              <Input
+                value={sceneForm.characterAction || ''}
+                onChange={e => setSceneForm({...sceneForm, characterAction: e.target.value})}
+                className="rounded-none bg-background/50 border-border/50 font-mono text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Emotional Purpose</Label>
+                <Input
+                  value={sceneForm.emotionalPurpose || ''}
+                  onChange={e => setSceneForm({...sceneForm, emotionalPurpose: e.target.value})}
+                  className="rounded-none bg-background/50 border-border/50 font-mono text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Motion Intensity</Label>
+                <Select
+                  value={sceneForm.motionIntensity || 'medium'}
+                  onValueChange={(val) => setSceneForm({...sceneForm, motionIntensity: val})}
+                >
+                  <SelectTrigger className="rounded-none bg-background/50 border-border/50 font-mono text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none border-border/50">
+                    {["still", "low", "medium", "high", "explosive"].map((m) => (
+                      <SelectItem key={m} value={m} className="rounded-none uppercase">{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Color Palette</Label>
-              <Input 
-                value={sceneForm.colorPalette || ''} 
+              <Input
+                value={sceneForm.colorPalette || ''}
                 onChange={e => setSceneForm({...sceneForm, colorPalette: e.target.value})}
                 className="rounded-none bg-background/50 border-border/50 font-mono text-sm"
               />
@@ -244,11 +338,25 @@ export default function SceneEditor() {
 
             <div className="space-y-2">
               <Label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Wardrobe</Label>
-              <Input 
-                value={sceneForm.wardrobe || ''} 
+              <Input
+                value={sceneForm.wardrobe || ''}
                 onChange={e => setSceneForm({...sceneForm, wardrobe: e.target.value})}
                 className="rounded-none bg-background/50 border-border/50 font-mono text-sm"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-mono tracking-widest text-accent flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> AI Video Prompt (per scene)
+              </Label>
+              <Textarea
+                value={sceneForm.aiPrompt || ''}
+                onChange={e => setSceneForm({...sceneForm, aiPrompt: e.target.value})}
+                className="rounded-none bg-background/80 border-accent/30 min-h-[140px] font-mono text-xs leading-relaxed"
+              />
+              <p className="text-[10px] font-mono text-muted-foreground">
+                This prompt is what the prompt generator uses for this scene. Edit to override.
+              </p>
             </div>
           </div>
         </div>
@@ -351,5 +459,3 @@ export default function SceneEditor() {
     </div>
   );
 }
-// adding missing import
-import { Clapperboard } from "lucide-react";

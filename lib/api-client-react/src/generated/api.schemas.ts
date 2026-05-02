@@ -56,6 +56,9 @@ export interface Project {
   genre?: string;
   mood?: string;
   visualDirection?: string;
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
   status: ProjectStatus;
   coverColor?: string;
   createdAt: string;
@@ -135,6 +138,9 @@ export interface CreateProjectInput {
   genre?: string;
   mood?: string;
   visualDirection?: string;
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
 }
 
 export type UpdateProjectInputStatus =
@@ -155,6 +161,9 @@ export interface UpdateProjectInput {
   genre?: string;
   mood?: string;
   visualDirection?: string;
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
   status?: UpdateProjectInputStatus;
 }
 
@@ -264,6 +273,12 @@ export interface StoryboardScene {
   colorPalette: string;
   wardrobe?: string;
   notes?: string;
+  environment: string;
+  characterAction: string;
+  emotionalPurpose: string;
+  motionIntensity: string;
+  aiPrompt: string;
+  locked: boolean;
 }
 
 export interface UpdateSceneInput {
@@ -276,6 +291,25 @@ export interface UpdateSceneInput {
   colorPalette?: string;
   wardrobe?: string;
   notes?: string;
+  environment?: string;
+  characterAction?: string;
+  emotionalPurpose?: string;
+  motionIntensity?: string;
+  aiPrompt?: string;
+  locked?: boolean;
+}
+
+export interface GenerateStoryboardInput {
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
+  /** When true, regenerate even locked scenes. Default false. */
+  force?: boolean;
+}
+
+export interface CreateSceneInput {
+  /** Insert immediately after this index. If omitted, scene is appended at the end. */
+  afterIndex?: number;
 }
 
 export type PromptModel = (typeof PromptModel)[keyof typeof PromptModel];

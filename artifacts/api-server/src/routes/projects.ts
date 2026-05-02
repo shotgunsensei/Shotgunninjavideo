@@ -66,6 +66,9 @@ router.post("/projects", async (req, res) => {
       genre: body.genre ?? null,
       mood: body.mood ?? null,
       visualDirection: body.visualDirection ?? null,
+      visualStyle: body.visualStyle ?? null,
+      brandDirection: body.brandDirection ?? null,
+      lyrics: body.lyrics ?? null,
       status: "draft",
       coverColor,
     })
@@ -147,7 +150,17 @@ router.patch("/projects/:id", async (req, res) => {
   const id = req.params.id;
   const body = UpdateProjectBody.parse(req.body);
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
-  for (const k of ["title", "artist", "genre", "mood", "visualDirection", "status"] as const) {
+  for (const k of [
+    "title",
+    "artist",
+    "genre",
+    "mood",
+    "visualDirection",
+    "visualStyle",
+    "brandDirection",
+    "lyrics",
+    "status",
+  ] as const) {
     if (body[k] !== undefined) updateData[k] = body[k];
   }
   const [updated] = await db

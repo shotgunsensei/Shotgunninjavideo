@@ -14,6 +14,9 @@ export interface Project {
   genre?: string;
   mood?: string;
   visualDirection?: string;
+  visualStyle?: string;
+  brandDirection?: string;
+  lyrics?: string;
   status: ProjectStatus;
   coverColor?: string;
   createdAt: Date;

@@ -87,105 +87,6 @@ export function buildMockAnalysis(projectId: string, durationSec: number, bpmHin
   return { bpm, keySignature, energy, loudnessDb, segments, emotionalMap };
 }
 
-const SHOT_TYPES = [
-  "extreme close-up",
-  "close-up",
-  "medium shot",
-  "wide shot",
-  "aerial drone",
-  "dutch angle",
-  "POV",
-  "tracking shot",
-  "over-the-shoulder",
-];
-
-const CAMERA_MOVES = [
-  "slow dolly in",
-  "handheld whip pan",
-  "crane up",
-  "steadicam follow",
-  "static lockdown",
-  "360° orbit",
-  "rapid zoom",
-  "gimbal arc",
-];
-
-const LOCATIONS = [
-  "rain-soaked alley under neon signage",
-  "abandoned warehouse with shafts of magenta light",
-  "underground subway tunnel",
-  "rooftop overlooking a midnight skyline",
-  "smoke-filled basement club",
-  "desert highway at twilight",
-  "concrete parking garage with flickering fluorescents",
-  "decaying greenhouse drowning in red light",
-  "industrial loading bay with strobing lights",
-];
-
-const LIGHTING = [
-  "neon magenta key, deep purple fill",
-  "single crimson kicker, hard shadows",
-  "ultraviolet wash with practical haze",
-  "high-contrast chiaroscuro",
-  "dappled silhouette through venetian blinds",
-  "strobe pulses at 120 BPM",
-  "moonlight blue with crimson rim",
-  "amber sodium street lamps",
-];
-
-const PALETTES = [
-  "obsidian black + neon magenta + deep purple",
-  "crimson red + bone white + jet black",
-  "ultraviolet + cyan rim",
-  "midnight indigo + blood orange accents",
-  "monochrome with single magenta object",
-  "burnt copper + electric pink",
-];
-
-const WARDROBE = [
-  "black tactical leather with crimson lining",
-  "oversized vintage trench, mesh accents",
-  "monochrome streetwear, chrome jewelry",
-  "draped silk, smudged eyeliner",
-  "wet-look vinyl, knife-pleated skirt",
-];
-
-export function buildStoryboardScene(
-  projectId: string,
-  segment: { id: string; index: number; startSec: number; endSec: number; section: string; emotion: string; intensity: number },
-  rngSeed: string,
-) {
-  const rng = pseudoRandom(rngSeed + "-" + segment.index);
-  const pick = <T,>(arr: T[]): T => arr[Math.floor(rng() * arr.length)] as T;
-  const sectionTitleMap: Record<string, string> = {
-    intro: "Cold Open",
-    verse: "Verse Vignette",
-    pre_chorus: "Tension Build",
-    chorus: "Chorus Detonation",
-    bridge: "Bridge Reverie",
-    drop: "Drop Sequence",
-    breakdown: "Breakdown Interlude",
-    outro: "Final Echo",
-  };
-
-  return {
-    projectId,
-    segmentId: segment.id,
-    index: segment.index,
-    startSec: segment.startSec,
-    endSec: segment.endSec,
-    title: `${sectionTitleMap[segment.section] ?? "Scene"} — ${segment.emotion}`,
-    description: `Subject performs against ${pick(LOCATIONS)}. Pacing matches ${segment.section} energy (${Math.round(segment.intensity * 100)}%). Movement choreographed to the beat with breath cuts on accents.`,
-    shotType: pick(SHOT_TYPES),
-    cameraMovement: pick(CAMERA_MOVES),
-    location: pick(LOCATIONS),
-    lighting: pick(LIGHTING),
-    colorPalette: pick(PALETTES),
-    wardrobe: pick(WARDROBE),
-    notes: `Cut on the downbeat. Emotional target: ${segment.emotion}.`,
-  };
-}
-
 export function buildPromptText(scene: {
   title: string;
   description: string;
@@ -195,7 +96,9 @@ export function buildPromptText(scene: {
   lighting: string;
   colorPalette: string;
   wardrobe: string | null;
+  aiPrompt?: string | null;
 }) {
+  if (scene.aiPrompt && scene.aiPrompt.trim().length > 0) return scene.aiPrompt;
   const parts = [
     `${scene.shotType}, ${scene.cameraMovement}`,
     scene.location,

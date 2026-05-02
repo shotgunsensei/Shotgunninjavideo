@@ -1,4 +1,4 @@
-import { pgTable, text, doublePrecision, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, doublePrecision, varchar, integer, boolean } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 import { projectsTable } from "./projects";
 import { timelineSegmentsTable } from "./timeline";
@@ -19,6 +19,12 @@ export const storyboardScenesTable = pgTable("storyboard_scenes", {
   colorPalette: text("color_palette").notNull(),
   wardrobe: text("wardrobe"),
   notes: text("notes"),
+  environment: text("environment").notNull().default(""),
+  characterAction: text("character_action").notNull().default(""),
+  emotionalPurpose: text("emotional_purpose").notNull().default(""),
+  motionIntensity: text("motion_intensity").notNull().default("medium"),
+  aiPrompt: text("ai_prompt").notNull().default(""),
+  locked: boolean("locked").notNull().default(false),
 });
 
 export type StoryboardScene = typeof storyboardScenesTable.$inferSelect;

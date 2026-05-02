@@ -22,8 +22,10 @@ import type {
   AudioFile,
   CreateExportInput,
   CreateProjectInput,
+  CreateSceneInput,
   CreateSegmentInput,
   ExportRecord,
+  GenerateStoryboardInput,
   HealthStatus,
   Project,
   ProjectDetail,
@@ -1432,11 +1434,14 @@ export const getGenerateStoryboardUrl = (id: string) => {
 
 export const generateStoryboard = async (
   id: string,
+  generateStoryboardInput?: GenerateStoryboardInput,
   options?: RequestInit,
 ): Promise<StoryboardScene[]> => {
   return customFetch<StoryboardScene[]>(getGenerateStoryboardUrl(id), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateStoryboardInput),
   });
 };
 
@@ -1447,14 +1452,14 @@ export const getGenerateStoryboardMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateStoryboard>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<GenerateStoryboardInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof generateStoryboard>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<GenerateStoryboardInput> },
   TContext
 > => {
   const mutationKey = ["generateStoryboard"];
@@ -1468,11 +1473,11 @@ export const getGenerateStoryboardMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof generateStoryboard>>,
-    { id: string }
+    { id: string; data: BodyType<GenerateStoryboardInput> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return generateStoryboard(id, requestOptions);
+    return generateStoryboard(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1481,7 +1486,7 @@ export const getGenerateStoryboardMutationOptions = <
 export type GenerateStoryboardMutationResult = NonNullable<
   Awaited<ReturnType<typeof generateStoryboard>>
 >;
-
+export type GenerateStoryboardMutationBody = BodyType<GenerateStoryboardInput>;
 export type GenerateStoryboardMutationError = ErrorType<unknown>;
 
 /**
@@ -1494,17 +1499,104 @@ export const useGenerateStoryboard = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateStoryboard>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<GenerateStoryboardInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof generateStoryboard>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<GenerateStoryboardInput> },
   TContext
 > => {
   return useMutation(getGenerateStoryboardMutationOptions(options));
+};
+
+/**
+ * @summary Add a new storyboard scene (optionally after a given index)
+ */
+export const getAddSceneUrl = (id: string) => {
+  return `/api/projects/${id}/storyboard/scenes`;
+};
+
+export const addScene = async (
+  id: string,
+  createSceneInput?: CreateSceneInput,
+  options?: RequestInit,
+): Promise<StoryboardScene[]> => {
+  return customFetch<StoryboardScene[]>(getAddSceneUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSceneInput),
+  });
+};
+
+export const getAddSceneMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addScene>>,
+    TError,
+    { id: string; data: BodyType<CreateSceneInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addScene>>,
+  TError,
+  { id: string; data: BodyType<CreateSceneInput> },
+  TContext
+> => {
+  const mutationKey = ["addScene"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addScene>>,
+    { id: string; data: BodyType<CreateSceneInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addScene(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddSceneMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addScene>>
+>;
+export type AddSceneMutationBody = BodyType<CreateSceneInput>;
+export type AddSceneMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a new storyboard scene (optionally after a given index)
+ */
+export const useAddScene = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addScene>>,
+    TError,
+    { id: string; data: BodyType<CreateSceneInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addScene>>,
+  TError,
+  { id: string; data: BodyType<CreateSceneInput> },
+  TContext
+> => {
+  return useMutation(getAddSceneMutationOptions(options));
 };
 
 export const getUpdateSceneUrl = (sceneId: string) => {
@@ -1586,6 +1678,252 @@ export const useUpdateScene = <
   TContext
 > => {
   return useMutation(getUpdateSceneMutationOptions(options));
+};
+
+export const getDeleteSceneUrl = (sceneId: string) => {
+  return `/api/storyboard/${sceneId}`;
+};
+
+export const deleteScene = async (
+  sceneId: string,
+  options?: RequestInit,
+): Promise<StoryboardScene[]> => {
+  return customFetch<StoryboardScene[]>(getDeleteSceneUrl(sceneId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteSceneMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  const mutationKey = ["deleteScene"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteScene>>,
+    { sceneId: string }
+  > = (props) => {
+    const { sceneId } = props ?? {};
+
+    return deleteScene(sceneId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteSceneMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteScene>>
+>;
+
+export type DeleteSceneMutationError = ErrorType<unknown>;
+
+export const useDeleteScene = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  return useMutation(getDeleteSceneMutationOptions(options));
+};
+
+/**
+ * @summary Regenerate the contents of a single scene (respects locked unless force=true)
+ */
+export const getRegenerateSceneUrl = (sceneId: string) => {
+  return `/api/storyboard/${sceneId}/regenerate`;
+};
+
+export const regenerateScene = async (
+  sceneId: string,
+  options?: RequestInit,
+): Promise<StoryboardScene> => {
+  return customFetch<StoryboardScene>(getRegenerateSceneUrl(sceneId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRegenerateSceneMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof regenerateScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  const mutationKey = ["regenerateScene"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof regenerateScene>>,
+    { sceneId: string }
+  > = (props) => {
+    const { sceneId } = props ?? {};
+
+    return regenerateScene(sceneId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegenerateSceneMutationResult = NonNullable<
+  Awaited<ReturnType<typeof regenerateScene>>
+>;
+
+export type RegenerateSceneMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Regenerate the contents of a single scene (respects locked unless force=true)
+ */
+export const useRegenerateScene = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof regenerateScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  return useMutation(getRegenerateSceneMutationOptions(options));
+};
+
+/**
+ * @summary Duplicate a scene immediately after itself
+ */
+export const getDuplicateSceneUrl = (sceneId: string) => {
+  return `/api/storyboard/${sceneId}/duplicate`;
+};
+
+export const duplicateScene = async (
+  sceneId: string,
+  options?: RequestInit,
+): Promise<StoryboardScene[]> => {
+  return customFetch<StoryboardScene[]>(getDuplicateSceneUrl(sceneId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getDuplicateSceneMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof duplicateScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof duplicateScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  const mutationKey = ["duplicateScene"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof duplicateScene>>,
+    { sceneId: string }
+  > = (props) => {
+    const { sceneId } = props ?? {};
+
+    return duplicateScene(sceneId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DuplicateSceneMutationResult = NonNullable<
+  Awaited<ReturnType<typeof duplicateScene>>
+>;
+
+export type DuplicateSceneMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Duplicate a scene immediately after itself
+ */
+export const useDuplicateScene = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof duplicateScene>>,
+    TError,
+    { sceneId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof duplicateScene>>,
+  TError,
+  { sceneId: string },
+  TContext
+> => {
+  return useMutation(getDuplicateSceneMutationOptions(options));
 };
 
 export const getGetPromptsUrl = (id: string) => {
