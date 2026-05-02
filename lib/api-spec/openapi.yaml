@@ -887,6 +887,145 @@ paths:
               schema:
                 $ref: "#/components/schemas/BillingState"
 
+  /brand-presets:
+    get:
+      operationId: listBrandPresets
+      tags: [brand-presets]
+      summary: List all brand presets (defaults + user-created)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BrandPreset" }
+    post:
+      operationId: createBrandPreset
+      tags: [brand-presets]
+      summary: Create a new brand preset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateBrandPresetInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandPreset" }
+
+  /brand-presets/{id}:
+    get:
+      operationId: getBrandPreset
+      tags: [brand-presets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandPreset" }
+        "404":
+          description: Not found
+    patch:
+      operationId: updateBrandPreset
+      tags: [brand-presets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateBrandPresetInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandPreset" }
+    delete:
+      operationId: deleteBrandPreset
+      tags: [brand-presets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+        "409":
+          description: Cannot delete a default preset
+
+  /brand-presets/{id}/duplicate:
+    post:
+      operationId: duplicateBrandPreset
+      tags: [brand-presets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandPreset" }
+
+  /projects/{id}/apply-brand-preset:
+    post:
+      operationId: applyBrandPresetToProject
+      tags: [brand-presets]
+      summary: Apply a brand preset to a project (copies brand fields and links the preset)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplyBrandPresetInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+
+  /projects/{id}/save-as-brand-preset:
+    post:
+      operationId: saveProjectAsBrandPreset
+      tags: [brand-presets]
+      summary: Snapshot the project's current brand fields into a new preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SaveAsBrandPresetInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandPreset" }
+
 components:
   schemas:
     HealthStatus:
@@ -954,6 +1093,9 @@ components:
         durationSec: { type: number }
         bpm: { type: number }
         keySignature: { type: string }
+        brandPresetId:
+          type: string
+          nullable: true
 
     ProjectDetail:
       allOf:
@@ -1700,3 +1842,73 @@ components:
       required: [plan]
       properties:
         plan: { $ref: "#/components/schemas/PlanId" }
+
+    BrandPreset:
+      type: object
+      required: [id, name, isDefault, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        characterDescription: { type: string, nullable: true }
+        colorPalette:
+          type: string
+          nullable: true
+          description: Comma-separated hex codes (e.g. "#C40000, #1B1B1F, #F4A261").
+        visualStyle: { type: string, nullable: true }
+        logoDescription: { type: string, nullable: true }
+        voiceTone: { type: string, nullable: true }
+        recurringSymbols:
+          type: string
+          nullable: true
+          description: Comma-separated motifs/objects.
+        cameraLanguage: { type: string, nullable: true }
+        negativePromptRules: { type: string, nullable: true }
+        watermarkText: { type: string, nullable: true }
+        isDefault: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CreateBrandPresetInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        characterDescription: { type: string }
+        colorPalette: { type: string }
+        visualStyle: { type: string }
+        logoDescription: { type: string }
+        voiceTone: { type: string }
+        recurringSymbols: { type: string }
+        cameraLanguage: { type: string }
+        negativePromptRules: { type: string }
+        watermarkText: { type: string }
+
+    UpdateBrandPresetInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        characterDescription: { type: string, nullable: true }
+        colorPalette: { type: string, nullable: true }
+        visualStyle: { type: string, nullable: true }
+        logoDescription: { type: string, nullable: true }
+        voiceTone: { type: string, nullable: true }
+        recurringSymbols: { type: string, nullable: true }
+        cameraLanguage: { type: string, nullable: true }
+        negativePromptRules: { type: string, nullable: true }
+        watermarkText: { type: string, nullable: true }
+
+    ApplyBrandPresetInput:
+      type: object
+      required: [presetId]
+      properties:
+        presetId:
+          type: string
+          nullable: true
+          description: Pass null to detach the current preset.
+
+    SaveAsBrandPresetInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Optional override for the new preset's name.

@@ -69,6 +69,7 @@ export interface Project {
   durationSec?: number;
   bpm?: number;
   keySignature?: string;
+  brandPresetId?: string | null;
 }
 
 export interface AudioFile {
@@ -703,4 +704,61 @@ export interface BillingState {
 
 export interface UpgradePlanInput {
   plan: PlanId;
+}
+
+export interface BrandPreset {
+  id: string;
+  name: string;
+  characterDescription?: string | null;
+  /** Comma-separated hex codes (e.g. "#C40000, */
+  colorPalette?: string | null;
+  visualStyle?: string | null;
+  logoDescription?: string | null;
+  voiceTone?: string | null;
+  /** Comma-separated motifs/objects. */
+  recurringSymbols?: string | null;
+  cameraLanguage?: string | null;
+  negativePromptRules?: string | null;
+  watermarkText?: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBrandPresetInput {
+  /** @minLength 1 */
+  name: string;
+  characterDescription?: string;
+  colorPalette?: string;
+  visualStyle?: string;
+  logoDescription?: string;
+  voiceTone?: string;
+  recurringSymbols?: string;
+  cameraLanguage?: string;
+  negativePromptRules?: string;
+  watermarkText?: string;
+}
+
+export interface UpdateBrandPresetInput {
+  /** @minLength 1 */
+  name?: string;
+  characterDescription?: string | null;
+  colorPalette?: string | null;
+  visualStyle?: string | null;
+  logoDescription?: string | null;
+  voiceTone?: string | null;
+  recurringSymbols?: string | null;
+  cameraLanguage?: string | null;
+  negativePromptRules?: string | null;
+  watermarkText?: string | null;
+}
+
+export interface ApplyBrandPresetInput {
+  /** Pass null to detach the current preset. */
+  presetId: string | null;
+}
+
+export interface SaveAsBrandPresetInput {
+  /** Optional override for the new preset's name. */
+  name?: string;
 }

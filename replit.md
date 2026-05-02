@@ -30,6 +30,7 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 - `analysis` + `timeline_segments` — mock audio analysis (BPM/key/energy/loudness, segments with section + intensity + emotion, emotional map valence/arousal points)
 - `storyboard_scenes` — per-segment cinematic scene plan (shot type, camera, location, lighting, palette, wardrobe, **environment, characterAction, emotionalPurpose, motionIntensity, aiPrompt, locked**)
 - `lyric_lines` — parsed lyric lines per project (text, optional `timestampSec`, optional `sceneId` for manual assignment). Matched to scenes with this precedence: explicit `sceneId` always wins, otherwise `timestampSec` falls within `[scene.startSec, scene.endSec)`. Single source of truth: `artifacts/api-server/src/lib/lyricsParser.ts#lyricsForScene`.
+- `brand_presets` — reusable brand identity packs (id, name, characterDescription, colorPalette, visualStyle, logoDescription, voiceTone, recurringSymbols, cameraLanguage, negativePromptRules, watermarkText, isDefault, timestamps). 7 default presets are seeded idempotently on every server start (Shotgun Ninjas Productions, TorqueShed, TradeFlowKit, TechDeck, PulseDesk, FaultlineLab, Shotgun Ninja Village). `projects.brandPresetId` is a soft FK (no DB constraint to avoid circular schema imports).
 - `prompts` — AI video generation prompt per scene (model, text, negative prompt, aspect ratio, duration)
 - `exports` — generated exports. Format enum supports: `production_plan`, `txt`, `json`, `csv_shot_list`, `lyrics_timing`, `ai_prompt_pack`, `capcut_guide`, `davinci_guide`, `treatment`, `social_captions`. Builders live in `artifacts/api-server/src/lib/exporters.ts`; `FORMAT_META` maps each to mimeType + fileExtension surfaced via `ExportRecord` so the client downloads with correct mime/ext. CSV cells are sanitized against formula injection (leading `=+-@\t\r` → prefixed with `'`).
 - `activity` — recent activity feed
@@ -62,6 +63,17 @@ Two demo projects are seeded idempotently on every server start (`artifacts/api-
 - **"Shotgun Ninjas Rise" by Shotgun Ninjas** — hand-curated 11-plot founder/uprising template (219 s = 03:39, 96 BPM, A min, gritty_urban + crimson neon + rooftops). Each scene is a labeled "Plot 01 — The Empty Workshop" through "Plot 11 — Rise", with bespoke title, description, location, lighting, palette, wardrobe, character action, and AI prompt; LRC-timed sample lyrics (`SN_LYRICS`) are parsed and snapped into the matching scene. Designed to double as the starting template for new Shotgun Ninjas music videos.
 
 Each demo seed checks for its own title before inserting, so the seeder is safe to run on every boot and can add new built-in templates without disturbing existing ones.
+
+## Brand Presets
+
+Reusable visual identity packs at **`/brand-presets`** (sidebar Palette icon). Each preset has 10 fields: brand name, main character description, color palette (comma-separated hex), visual style, logo description, voice/tone, recurring symbols, preferred camera language, negative prompt rules, export watermark text.
+
+- **API**: `GET/POST /api/brand-presets`, `GET/PATCH/DELETE /api/brand-presets/{id}`, `POST /api/brand-presets/{id}/duplicate`, `POST /api/projects/{id}/apply-brand-preset` (body `{presetId: string|null}`), `POST /api/projects/{id}/save-as-brand-preset` (body `{name?}`). Routes in `artifacts/api-server/src/routes/brandPresets.ts`.
+- **Apply** copies `visualStyle`, `visualDirection`, an aggregated `brandDirection` summary, and the first valid hex of the palette into `coverColor` on the target project, and sets `projects.brandPresetId`. Pass `presetId: null` to detach.
+- **Save-as** snapshots the current project: aggregates unique scene `colorPalette` hexes (plus `coverColor`) into the preset palette, top-3 most-used `cameraMovement`s into camera language, scene `wardrobe` strings into character description, and project `mood` → voice tone, `artist` → watermark.
+- **Defaults** (`isDefault=true`) cannot be deleted (server returns 409, frontend hides the trash button). They can be edited and duplicated. Deleting a custom preset detaches it from any project still using it.
+- **Project Hub** (`pages/project-hub.tsx`) gained a "Brand Preset" card with an apply Select and a save-as input.
+- Naming caveat: orval generates request-body Zod constants from operationIds, so the route file imports `CreateBrandPresetBody` / `UpdateBrandPresetBody` / `ApplyBrandPresetToProjectBody` / `SaveProjectAsBrandPresetBody` even though the OpenAPI schemas are named `CreateBrandPresetInput` etc.
 
 ## Billing / Monetization (demo mode)
 

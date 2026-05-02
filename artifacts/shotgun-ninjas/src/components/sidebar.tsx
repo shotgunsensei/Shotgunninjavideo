@@ -13,6 +13,7 @@ import {
   Wand2,
   ShieldCheck,
   CreditCard,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
@@ -33,6 +34,7 @@ export function Sidebar() {
   const mainLinks = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/projects/new", label: "New Project", icon: PlusSquare },
+    { href: "/brand-presets", label: "Brand Presets", icon: Palette },
     { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/settings", label: "Settings", icon: Settings },
   ];

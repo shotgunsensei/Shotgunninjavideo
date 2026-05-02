@@ -19,10 +19,13 @@ import type {
 import type {
   ActivityItem,
   AnalysisResult,
+  ApplyBrandPresetInput,
   AudioFile,
   BillingState,
+  BrandPreset,
   Continuity,
   ContinuityApplyResult,
+  CreateBrandPresetInput,
   CreateExportInput,
   CreateProjectInput,
   CreateSceneInput,
@@ -38,6 +41,7 @@ import type {
   ProjectDetail,
   Prompt,
   PromptEngineResponse,
+  SaveAsBrandPresetInput,
   SaveLyricsInput,
   Settings,
   SplitSegmentInput,
@@ -45,6 +49,7 @@ import type {
   StoryboardScene,
   SubmitAnalysisInput,
   TimelineSegment,
+  UpdateBrandPresetInput,
   UpdateContinuityInput,
   UpdateLyricLineInput,
   UpdateProjectInput,
@@ -3619,4 +3624,658 @@ export const useCancelBillingPlan = <
   TContext
 > => {
   return useMutation(getCancelBillingPlanMutationOptions(options));
+};
+
+/**
+ * @summary List all brand presets (defaults + user-created)
+ */
+export const getListBrandPresetsUrl = () => {
+  return `/api/brand-presets`;
+};
+
+export const listBrandPresets = async (
+  options?: RequestInit,
+): Promise<BrandPreset[]> => {
+  return customFetch<BrandPreset[]>(getListBrandPresetsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBrandPresetsQueryKey = () => {
+  return [`/api/brand-presets`] as const;
+};
+
+export const getListBrandPresetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBrandPresets>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandPresets>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBrandPresetsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listBrandPresets>>
+  > = ({ signal }) => listBrandPresets({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandPresets>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBrandPresetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBrandPresets>>
+>;
+export type ListBrandPresetsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all brand presets (defaults + user-created)
+ */
+
+export function useListBrandPresets<
+  TData = Awaited<ReturnType<typeof listBrandPresets>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listBrandPresets>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBrandPresetsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new brand preset
+ */
+export const getCreateBrandPresetUrl = () => {
+  return `/api/brand-presets`;
+};
+
+export const createBrandPreset = async (
+  createBrandPresetInput: CreateBrandPresetInput,
+  options?: RequestInit,
+): Promise<BrandPreset> => {
+  return customFetch<BrandPreset>(getCreateBrandPresetUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBrandPresetInput),
+  });
+};
+
+export const getCreateBrandPresetMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBrandPreset>>,
+    TError,
+    { data: BodyType<CreateBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBrandPreset>>,
+  TError,
+  { data: BodyType<CreateBrandPresetInput> },
+  TContext
+> => {
+  const mutationKey = ["createBrandPreset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBrandPreset>>,
+    { data: BodyType<CreateBrandPresetInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBrandPreset(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBrandPresetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBrandPreset>>
+>;
+export type CreateBrandPresetMutationBody = BodyType<CreateBrandPresetInput>;
+export type CreateBrandPresetMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new brand preset
+ */
+export const useCreateBrandPreset = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBrandPreset>>,
+    TError,
+    { data: BodyType<CreateBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBrandPreset>>,
+  TError,
+  { data: BodyType<CreateBrandPresetInput> },
+  TContext
+> => {
+  return useMutation(getCreateBrandPresetMutationOptions(options));
+};
+
+export const getGetBrandPresetUrl = (id: string) => {
+  return `/api/brand-presets/${id}`;
+};
+
+export const getBrandPreset = async (
+  id: string,
+  options?: RequestInit,
+): Promise<BrandPreset> => {
+  return customFetch<BrandPreset>(getGetBrandPresetUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBrandPresetQueryKey = (id: string) => {
+  return [`/api/brand-presets/${id}`] as const;
+};
+
+export const getGetBrandPresetQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBrandPreset>>,
+  TError = ErrorType<void>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBrandPreset>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBrandPresetQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBrandPreset>>> = ({
+    signal,
+  }) => getBrandPreset(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBrandPreset>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBrandPresetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBrandPreset>>
+>;
+export type GetBrandPresetQueryError = ErrorType<void>;
+
+export function useGetBrandPreset<
+  TData = Awaited<ReturnType<typeof getBrandPreset>>,
+  TError = ErrorType<void>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBrandPreset>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBrandPresetQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getUpdateBrandPresetUrl = (id: string) => {
+  return `/api/brand-presets/${id}`;
+};
+
+export const updateBrandPreset = async (
+  id: string,
+  updateBrandPresetInput: UpdateBrandPresetInput,
+  options?: RequestInit,
+): Promise<BrandPreset> => {
+  return customFetch<BrandPreset>(getUpdateBrandPresetUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateBrandPresetInput),
+  });
+};
+
+export const getUpdateBrandPresetMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateBrandPreset>>,
+    TError,
+    { id: string; data: BodyType<UpdateBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateBrandPreset>>,
+  TError,
+  { id: string; data: BodyType<UpdateBrandPresetInput> },
+  TContext
+> => {
+  const mutationKey = ["updateBrandPreset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateBrandPreset>>,
+    { id: string; data: BodyType<UpdateBrandPresetInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateBrandPreset(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateBrandPresetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateBrandPreset>>
+>;
+export type UpdateBrandPresetMutationBody = BodyType<UpdateBrandPresetInput>;
+export type UpdateBrandPresetMutationError = ErrorType<unknown>;
+
+export const useUpdateBrandPreset = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateBrandPreset>>,
+    TError,
+    { id: string; data: BodyType<UpdateBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateBrandPreset>>,
+  TError,
+  { id: string; data: BodyType<UpdateBrandPresetInput> },
+  TContext
+> => {
+  return useMutation(getUpdateBrandPresetMutationOptions(options));
+};
+
+export const getDeleteBrandPresetUrl = (id: string) => {
+  return `/api/brand-presets/${id}`;
+};
+
+export const deleteBrandPreset = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteBrandPresetUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteBrandPresetMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBrandPreset>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteBrandPreset>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteBrandPreset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteBrandPreset>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteBrandPreset(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteBrandPresetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteBrandPreset>>
+>;
+
+export type DeleteBrandPresetMutationError = ErrorType<void>;
+
+export const useDeleteBrandPreset = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBrandPreset>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteBrandPreset>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteBrandPresetMutationOptions(options));
+};
+
+export const getDuplicateBrandPresetUrl = (id: string) => {
+  return `/api/brand-presets/${id}/duplicate`;
+};
+
+export const duplicateBrandPreset = async (
+  id: string,
+  options?: RequestInit,
+): Promise<BrandPreset> => {
+  return customFetch<BrandPreset>(getDuplicateBrandPresetUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getDuplicateBrandPresetMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof duplicateBrandPreset>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof duplicateBrandPreset>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["duplicateBrandPreset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof duplicateBrandPreset>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return duplicateBrandPreset(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DuplicateBrandPresetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof duplicateBrandPreset>>
+>;
+
+export type DuplicateBrandPresetMutationError = ErrorType<unknown>;
+
+export const useDuplicateBrandPreset = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof duplicateBrandPreset>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof duplicateBrandPreset>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDuplicateBrandPresetMutationOptions(options));
+};
+
+/**
+ * @summary Apply a brand preset to a project (copies brand fields and links the preset)
+ */
+export const getApplyBrandPresetToProjectUrl = (id: string) => {
+  return `/api/projects/${id}/apply-brand-preset`;
+};
+
+export const applyBrandPresetToProject = async (
+  id: string,
+  applyBrandPresetInput: ApplyBrandPresetInput,
+  options?: RequestInit,
+): Promise<Project> => {
+  return customFetch<Project>(getApplyBrandPresetToProjectUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(applyBrandPresetInput),
+  });
+};
+
+export const getApplyBrandPresetToProjectMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applyBrandPresetToProject>>,
+    TError,
+    { id: string; data: BodyType<ApplyBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof applyBrandPresetToProject>>,
+  TError,
+  { id: string; data: BodyType<ApplyBrandPresetInput> },
+  TContext
+> => {
+  const mutationKey = ["applyBrandPresetToProject"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof applyBrandPresetToProject>>,
+    { id: string; data: BodyType<ApplyBrandPresetInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return applyBrandPresetToProject(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApplyBrandPresetToProjectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof applyBrandPresetToProject>>
+>;
+export type ApplyBrandPresetToProjectMutationBody =
+  BodyType<ApplyBrandPresetInput>;
+export type ApplyBrandPresetToProjectMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Apply a brand preset to a project (copies brand fields and links the preset)
+ */
+export const useApplyBrandPresetToProject = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof applyBrandPresetToProject>>,
+    TError,
+    { id: string; data: BodyType<ApplyBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof applyBrandPresetToProject>>,
+  TError,
+  { id: string; data: BodyType<ApplyBrandPresetInput> },
+  TContext
+> => {
+  return useMutation(getApplyBrandPresetToProjectMutationOptions(options));
+};
+
+/**
+ * @summary Snapshot the project's current brand fields into a new preset
+ */
+export const getSaveProjectAsBrandPresetUrl = (id: string) => {
+  return `/api/projects/${id}/save-as-brand-preset`;
+};
+
+export const saveProjectAsBrandPreset = async (
+  id: string,
+  saveAsBrandPresetInput?: SaveAsBrandPresetInput,
+  options?: RequestInit,
+): Promise<BrandPreset> => {
+  return customFetch<BrandPreset>(getSaveProjectAsBrandPresetUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveAsBrandPresetInput),
+  });
+};
+
+export const getSaveProjectAsBrandPresetMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveProjectAsBrandPreset>>,
+    TError,
+    { id: string; data: BodyType<SaveAsBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveProjectAsBrandPreset>>,
+  TError,
+  { id: string; data: BodyType<SaveAsBrandPresetInput> },
+  TContext
+> => {
+  const mutationKey = ["saveProjectAsBrandPreset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveProjectAsBrandPreset>>,
+    { id: string; data: BodyType<SaveAsBrandPresetInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return saveProjectAsBrandPreset(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveProjectAsBrandPresetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveProjectAsBrandPreset>>
+>;
+export type SaveProjectAsBrandPresetMutationBody =
+  BodyType<SaveAsBrandPresetInput>;
+export type SaveProjectAsBrandPresetMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Snapshot the project's current brand fields into a new preset
+ */
+export const useSaveProjectAsBrandPreset = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveProjectAsBrandPreset>>,
+    TError,
+    { id: string; data: BodyType<SaveAsBrandPresetInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveProjectAsBrandPreset>>,
+  TError,
+  { id: string; data: BodyType<SaveAsBrandPresetInput> },
+  TContext
+> => {
+  return useMutation(getSaveProjectAsBrandPresetMutationOptions(options));
 };

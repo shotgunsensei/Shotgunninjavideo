@@ -11,8 +11,10 @@ import {
   activityTable,
   settingsTable,
   lyricLinesTable,
+  brandPresetsTable,
   type InsertStoryboardScene,
   type InsertTimelineSegment,
+  type InsertBrandPreset,
 } from "@workspace/db";
 import { buildMockAnalysis, buildPromptText } from "./mockAnalysis";
 import { generateScene } from "./sceneGenerator";
@@ -26,6 +28,7 @@ export async function seedIfEmpty() {
       await db.insert(settingsTable).values({ id: 1 }).onConflictDoNothing();
     }
 
+    await seedDefaultBrandPresets();
     await seedBlackVelvet();
     await seedShotgunNinjasRise();
   } catch (err) {
@@ -633,4 +636,164 @@ async function seedShotgunNinjasRise() {
   });
 
   logger.info({ projectId }, "Demo project seeded: Shotgun Ninjas Rise");
+}
+
+// ---------------------------------------------------------------------------
+// Default brand presets — re-seedable, idempotent by name+isDefault=true
+// ---------------------------------------------------------------------------
+
+const DEFAULT_BRAND_PRESETS: Omit<InsertBrandPreset, "id" | "createdAt" | "updatedAt" | "isDefault">[] = [
+  {
+    name: "Shotgun Ninjas Productions",
+    characterDescription:
+      "Lone founder figure in oversized black hoodie, distressed denim, fitted cap pulled low, single red bandana at wrist or neck. Crew variants in coordinated black-and-red workwear with a small red ninja patch on the shoulder.",
+    colorPalette: "#C40000, #1B1B1F, #F4A261, #FFFFFF, #2A2A2A",
+    visualStyle:
+      "Gritty urban uprising. Crimson neon signage, wet asphalt, atmospheric haze, rooftop manifesto energy. Hype Williams scale meets Larry Clark documentary realism. 35mm film grain, anamorphic widescreen, ARRI Alexa look.",
+    logoDescription:
+      "Hand-drawn red ninja insignia — bold crimson silhouette on a stark white or black field. Always rendered with rough-edged authenticity, never cleaned up.",
+    voiceTone:
+      "Defiant, anchoring, brotherhood-first. Underdog founder energy. Quiet menace over loud bravado.",
+    recurringSymbols:
+      "red ninja insignia, crimson neon signage, rooftop skyline, single desk lamp, hammer + sparks, stacked-hands vow, banner unfurl, fist raised at sunrise",
+    cameraLanguage:
+      "Low-angle hero, slow dolly-in on the eyes, crane reveal pulling up to industrial skyline, drone parallel track across rooftops, static lockdown for the doubt beats",
+    negativePromptRules:
+      "fantasy, daylight clean, polished glossy CGI, pastel, cartoonish, low contrast, sci-fi, overlit",
+    watermarkText: "SHOTGUN NINJAS",
+  },
+  {
+    name: "TorqueShed",
+    characterDescription:
+      "Gloved mechanic-engineer in stained navy work shirt, sleeves rolled, leather apron, safety glasses pushed up on the forehead. Hands always in frame: oil-blackened, capable.",
+    colorPalette: "#0E0E10, #FF6A00, #C0C0C0, #1F2937, #F5C518",
+    visualStyle:
+      "Industrial workshop after dark. Sodium-orange task lighting, cool steel reflections, sparks and torque haze. Mechanical precision crossed with grit. Practical lighting only — no neon spectacle.",
+    logoDescription:
+      "Stamped-steel wordmark 'TORQUESHED' in heavy slab serif, embossed with a faint torque-arrow over the T.",
+    voiceTone:
+      "Direct, calloused, mechanically confident. No marketing speak — torque values and tolerances.",
+    recurringSymbols:
+      "torque wrench, sparking grinder, steel shavings, blueprint pinned to pegboard, oil-stained rag, halogen drop lamp",
+    cameraLanguage:
+      "Macro on metal, rack-focus from tool to face, locked-off product shot, slow push-in on the part being worked",
+    negativePromptRules:
+      "clean office, white background, stock-photo polish, fashion lighting, fantasy, cartoon, oversaturated",
+    watermarkText: "TORQUESHED // BUILT IN THE SHED",
+  },
+  {
+    name: "TradeFlowKit",
+    characterDescription:
+      "Working tradesperson in branded hi-vis softshell over a clean tee, tablet in one hand, framing tape in the other. Crew shots show two-to-three trades collaborating on a clean job site.",
+    colorPalette: "#FFB000, #1E2A38, #FFFFFF, #4B5563, #22C55E",
+    visualStyle:
+      "Bright, optimistic job-site documentary. Golden-hour exteriors, clean indoor framing with shallow depth of field. App UI integrated as floating cards over the work, never replacing it.",
+    logoDescription:
+      "'TRADEFLOWKIT' in geometric sans, with a flowing arrow tying TRADE → FLOW → KIT, hi-vis amber accent.",
+    voiceTone:
+      "Practical, helpful, mid-job-site direct. Speaks in checklists and time saved, not features.",
+    recurringSymbols:
+      "hi-vis amber stripe, tablet checklist overlay, framing tape measure, completed punch-list checkmark, two-trades handshake",
+    cameraLanguage:
+      "Handheld walk-and-talk, clean over-the-shoulder of the tablet, exterior wide of the finished job, time-lapse of the punch list ticking down",
+    negativePromptRules:
+      "dirty job site exaggeration, comic exaggeration, broken tools, frustrated body language, dark moody grading",
+    watermarkText: "TRADEFLOWKIT",
+  },
+  {
+    name: "TechDeck",
+    characterDescription:
+      "Calm engineer at a triple-monitor workstation, dark hoodie or merino crewneck, mechanical keyboard in the foreground. Hands on keys, not on chin — building, not posing.",
+    colorPalette: "#0B1220, #00E5FF, #F59E0B, #E5E7EB, #111827",
+    visualStyle:
+      "Late-night build energy. Deep navy darkroom, cyan monitor glow, single warm amber kicker from a desk lamp. Hardware close-ups inter-cut with code-on-screen. Cinematic Apple-keynote restraint.",
+    logoDescription:
+      "'TECHDECK' wordmark in monospace, with a subtle stacked-card glyph behind the T forming a deck of layered planes.",
+    voiceTone:
+      "Calm engineering authority. Specifications over adjectives. Never hype — always ship-quality.",
+    recurringSymbols:
+      "mechanical keyboard rows, RGB-off motherboard close-up, terminal cursor blink, oscilloscope trace, cable-managed rack",
+    cameraLanguage:
+      "Slow macro slider across the keyboard, rack-focus from screen text to engineer's eyes, locked-off product hero, parallax push on the tower",
+    negativePromptRules:
+      "gamer-rgb spectacle, neon arcade, anime, fantasy, cluttered desk, frustrated engineer, marketing-bro lighting",
+    watermarkText: "TECHDECK",
+  },
+  {
+    name: "PulseDesk",
+    characterDescription:
+      "Approachable healthcare-ops lead in soft scrubs or a clean blazer, mid-conversation with a colleague at a standing desk. Always shoulders-up warmth — eye contact with the patient or teammate, never with the camera.",
+    colorPalette: "#10B981, #FFFFFF, #FB7185, #0F172A, #F1F5F9",
+    visualStyle:
+      "Bright, calm clinical-modern. Soft daylight from large windows, warm coral accent on a single object per frame. Clean white architecture, no cold-blue 'medical' clichés. Trust through restraint.",
+    logoDescription:
+      "'PULSEDESK' in humanist sans with a subtle ECG pulse line tracing through the U, mint-green stroke.",
+    voiceTone:
+      "Warm, reassuring, clinically precise without jargon. Speaks like a senior charge nurse who has seen everything.",
+    recurringSymbols:
+      "single ECG pulse line, mint-green status dot, soft-rounded UI card, fresh tulip on a desk corner, patient hand-on-hand",
+    cameraLanguage:
+      "Soft handheld over-the-shoulder, slow push-in on the conversation, shallow-depth product hero of the dashboard, gentle pull-back to reveal the team",
+    negativePromptRules:
+      "cold blue hospital lighting, dramatic ER chaos, fear-based imagery, clinical sterility extreme, dystopian, low-light moody",
+    watermarkText: "PULSEDESK",
+  },
+  {
+    name: "FaultlineLab",
+    characterDescription:
+      "Field geologist or seismic researcher in a slate-grey field jacket over a thermal layer, ruggedized tablet, headlamp pushed onto the brow. Always at-the-data, never staged.",
+    colorPalette: "#1F2937, #F43F5E, #F59E0B, #94A3B8, #0F172A",
+    visualStyle:
+      "Research-station authenticity. Cold ambient daylight from a high window, signal-red and warning-amber as the only saturated colors — used for data points, not decoration. Charts and maps are diegetic, on actual screens.",
+    logoDescription:
+      "'FAULTLINELAB' in technical sans with a jagged signal-red fault line cracking horizontally through the wordmark.",
+    voiceTone:
+      "Measured scientific authority. Speaks in confidence intervals and observed magnitudes. Never sensationalizes — the data is dramatic enough.",
+    recurringSymbols:
+      "seismic waveform, contoured fault map, ruggedized tablet, geologic core sample, signal-red warning dot, amber alert pulse",
+    cameraLanguage:
+      "Locked-off observational wide, slow zoom on the data screen, rack-focus from sensor to researcher, drone-down on the field site",
+    negativePromptRules:
+      "disaster-movie melodrama, exploding cgi, glossy news graphics, fantasy, neon, cheerful, oversaturated",
+    watermarkText: "FAULTLINELAB",
+  },
+  {
+    name: "Shotgun Ninja Village",
+    characterDescription:
+      "Multigenerational village crew — elders, builders, and kids — in everyday warm-toned workwear with a single small red ninja patch sewn onto the sleeve or cap. Always a community shot, never a lone hero.",
+    colorPalette: "#C44536, #F4A261, #2A9D8F, #E9C46A, #FFFFFF",
+    visualStyle:
+      "Daylight community documentary. Open courtyards, painted brick walls, market-stall warmth. Crimson stays as the brand accent but the world is sun-warm and inhabited. Anti-corporate, anti-edgy — earned belonging.",
+    logoDescription:
+      "Hand-painted red ninja insignia inside a circular village seal, with the village name curved around it in a friendly hand-lettered serif.",
+    voiceTone:
+      "Welcoming village-elder warmth. Speaks in 'we' and 'come sit'. Brotherhood broadened to neighborhood.",
+    recurringSymbols:
+      "red ninja insignia (small, sewn-on), shared courtyard table, painted brick wall, market lanterns, kids and elders side-by-side, communal cooking pot",
+    cameraLanguage:
+      "Wide observational courtyards, slow handheld through the market, golden-hour reveals over rooftops, intimate medium shots of conversation",
+    negativePromptRules:
+      "lone-hero framing, edgy nightclub neon, dystopian, gritty grime, isolation, hype-bro posturing, cold-blue moody",
+    watermarkText: "SHOTGUN NINJA VILLAGE",
+  },
+];
+
+async function seedDefaultBrandPresets() {
+  const { and } = await import("drizzle-orm");
+  for (const preset of DEFAULT_BRAND_PRESETS) {
+    // Match on (name, isDefault=true) so a user-created preset that happens to
+    // share a name doesn't block the default from being seeded.
+    const [existing] = await db
+      .select()
+      .from(brandPresetsTable)
+      .where(
+        and(
+          eq(brandPresetsTable.name, preset.name),
+          eq(brandPresetsTable.isDefault, true),
+        ),
+      );
+    if (existing) continue;
+    await db.insert(brandPresetsTable).values({ ...preset, isDefault: true });
+    logger.info({ name: preset.name }, "Seeded default brand preset");
+  }
 }

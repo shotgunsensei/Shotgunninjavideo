@@ -16,6 +16,7 @@ export const projectsTable = pgTable("projects", {
   durationSec: doublePrecision("duration_sec"),
   bpm: doublePrecision("bpm"),
   keySignature: text("key_signature"),
+  brandPresetId: varchar("brand_preset_id", { length: 32 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

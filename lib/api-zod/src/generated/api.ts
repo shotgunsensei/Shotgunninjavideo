@@ -77,6 +77,7 @@ export const ListProjectsResponseItem = zod.object({
   durationSec: zod.number().optional(),
   bpm: zod.number().optional(),
   keySignature: zod.string().optional(),
+  brandPresetId: zod.string().nullish(),
 });
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
 
@@ -127,6 +128,7 @@ export const GetProjectResponse = zod
     durationSec: zod.number().optional(),
     bpm: zod.number().optional(),
     keySignature: zod.string().optional(),
+    brandPresetId: zod.string().nullish(),
   })
   .and(
     zod.object({
@@ -236,6 +238,7 @@ export const UpdateProjectResponse = zod.object({
   durationSec: zod.number().optional(),
   bpm: zod.number().optional(),
   keySignature: zod.string().optional(),
+  brandPresetId: zod.string().nullish(),
 });
 
 export const DeleteProjectParams = zod.object({
@@ -1389,5 +1392,251 @@ export const CancelBillingPlanResponse = zod.object({
   currentPeriodStart: zod.coerce.date().nullish(),
   currentPeriodEnd: zod.coerce.date().nullish(),
   cancelAtPeriodEnd: zod.boolean(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List all brand presets (defaults + user-created)
+ */
+export const ListBrandPresetsResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListBrandPresetsResponse = zod.array(ListBrandPresetsResponseItem);
+
+/**
+ * @summary Create a new brand preset
+ */
+
+export const CreateBrandPresetBody = zod.object({
+  name: zod.string().min(1),
+  characterDescription: zod.string().optional(),
+  colorPalette: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  logoDescription: zod.string().optional(),
+  voiceTone: zod.string().optional(),
+  recurringSymbols: zod.string().optional(),
+  cameraLanguage: zod.string().optional(),
+  negativePromptRules: zod.string().optional(),
+  watermarkText: zod.string().optional(),
+});
+
+export const CreateBrandPresetResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+export const GetBrandPresetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetBrandPresetResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+export const UpdateBrandPresetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateBrandPresetBody = zod.object({
+  name: zod.string().min(1).optional(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod.string().nullish(),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod.string().nullish(),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+});
+
+export const UpdateBrandPresetResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+export const DeleteBrandPresetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DuplicateBrandPresetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DuplicateBrandPresetResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Apply a brand preset to a project (copies brand fields and links the preset)
+ */
+export const ApplyBrandPresetToProjectParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ApplyBrandPresetToProjectBody = zod.object({
+  presetId: zod
+    .string()
+    .nullable()
+    .describe("Pass null to detach the current preset."),
+});
+
+export const ApplyBrandPresetToProjectResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  artist: zod.string().optional(),
+  genre: zod.string().optional(),
+  mood: zod.string().optional(),
+  visualDirection: zod.string().optional(),
+  visualStyle: zod.string().optional(),
+  brandDirection: zod.string().optional(),
+  lyrics: zod.string().optional(),
+  status: zod.enum([
+    "draft",
+    "uploaded",
+    "analyzed",
+    "storyboarded",
+    "prompted",
+    "exported",
+  ]),
+  coverColor: zod.string().optional(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+  sceneCount: zod.number().optional(),
+  promptCount: zod.number().optional(),
+  exportCount: zod.number().optional(),
+  durationSec: zod.number().optional(),
+  bpm: zod.number().optional(),
+  keySignature: zod.string().optional(),
+  brandPresetId: zod.string().nullish(),
+});
+
+/**
+ * @summary Snapshot the project's current brand fields into a new preset
+ */
+export const SaveProjectAsBrandPresetParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const SaveProjectAsBrandPresetBody = zod.object({
+  name: zod
+    .string()
+    .optional()
+    .describe("Optional override for the new preset's name."),
+});
+
+export const SaveProjectAsBrandPresetResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  characterDescription: zod.string().nullish(),
+  colorPalette: zod
+    .string()
+    .nullish()
+    .describe('Comma-separated hex codes (e.g. \"#C40000,'),
+  visualStyle: zod.string().nullish(),
+  logoDescription: zod.string().nullish(),
+  voiceTone: zod.string().nullish(),
+  recurringSymbols: zod
+    .string()
+    .nullish()
+    .describe("Comma-separated motifs\/objects."),
+  cameraLanguage: zod.string().nullish(),
+  negativePromptRules: zod.string().nullish(),
+  watermarkText: zod.string().nullish(),
+  isDefault: zod.boolean(),
+  createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

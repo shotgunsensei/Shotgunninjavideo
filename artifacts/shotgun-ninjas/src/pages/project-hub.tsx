@@ -1,18 +1,29 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Music, Zap, Clapperboard, Download, Edit2, Check, X, Trash2 } from "lucide-react";
+import { Loader2, Music, Zap, Clapperboard, Download, Edit2, Check, X, Trash2, Palette, Save } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  useGetProject, 
+import {
+  useGetProject,
   getGetProjectQueryKey,
   useUpdateProject,
-  useDeleteProject
+  useDeleteProject,
+  useListBrandPresets,
+  getListBrandPresetsQueryKey,
+  useApplyBrandPresetToProject,
+  useSaveProjectAsBrandPreset,
 } from "@workspace/api-client-react";
 import {
   AlertDialog,
@@ -41,6 +52,10 @@ export default function ProjectHub() {
 
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const { data: presets } = useListBrandPresets();
+  const applyPreset = useApplyBrandPresetToProject();
+  const saveAsPreset = useSaveProjectAsBrandPreset();
+  const [saveAsName, setSaveAsName] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", artist: "", genre: "" });
@@ -66,6 +81,34 @@ export default function ProjectHub() {
         toast({ title: "Project updated" });
       }
     });
+  };
+
+  const handleApplyPreset = (value: string) => {
+    const presetId = value === "__none__" ? null : value;
+    applyPreset.mutate(
+      { id: projectId, data: { presetId } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
+          toast({ title: presetId ? "Brand preset applied" : "Brand preset detached" });
+        },
+        onError: () => toast({ title: "Failed to apply preset", variant: "destructive" }),
+      }
+    );
+  };
+
+  const handleSaveAsPreset = () => {
+    saveAsPreset.mutate(
+      { id: projectId, data: saveAsName.trim() ? { name: saveAsName.trim() } : {} },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListBrandPresetsQueryKey() });
+          setSaveAsName("");
+          toast({ title: "Saved as new brand preset" });
+        },
+        onError: () => toast({ title: "Failed to save preset", variant: "destructive" }),
+      }
+    );
   };
 
   const handleDelete = () => {
@@ -205,6 +248,87 @@ export default function ProjectHub() {
           </CardContent>
         </Card>
       )}
+
+      <Card className="rounded-none border-border/50 bg-card/20 backdrop-blur">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Palette className="w-3.5 h-3.5" /> Brand Preset
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">
+                Apply Preset
+              </label>
+              <Select
+                value={project.brandPresetId ?? "__none__"}
+                onValueChange={handleApplyPreset}
+                disabled={applyPreset.isPending}
+              >
+                <SelectTrigger
+                  className="rounded-none bg-background/50 font-mono text-sm"
+                  data-testid="select-apply-preset"
+                >
+                  <SelectValue placeholder="Choose a brand preset..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-none">
+                  <SelectItem value="__none__" data-testid="option-no-preset">— None —</SelectItem>
+                  {presets?.map((p) => (
+                    <SelectItem key={p.id} value={p.id} data-testid={`option-preset-${p.id}`}>
+                      {p.name}{p.isDefault ? " · default" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] font-mono text-muted-foreground/70">
+                Applies the preset's visual style, brand direction, and cover color to this project.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">
+                Save Current as New Preset
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={saveAsName}
+                  onChange={(e) => setSaveAsName(e.target.value)}
+                  placeholder={`${project.title} (Saved Preset)`}
+                  className="rounded-none bg-background/50 font-mono text-sm"
+                  data-testid="input-save-as-name"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSaveAsPreset}
+                  disabled={saveAsPreset.isPending}
+                  className="rounded-none uppercase tracking-wider text-xs shrink-0"
+                  data-testid="button-save-as-preset"
+                >
+                  {saveAsPreset.isPending ? (
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-3 h-3 mr-2" />
+                  )}
+                  Save
+                </Button>
+              </div>
+              <p className="text-[10px] font-mono text-muted-foreground/70">
+                Snapshots this project's brand fields, palette, and camera language into a new reusable preset.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Link href="/brand-presets">
+              <Button variant="ghost" size="sm" className="rounded-none uppercase tracking-wider text-xs text-muted-foreground hover:text-primary">
+                Manage Brand Presets →
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       <div>
         <h2 className="text-xl font-bold uppercase tracking-widest mb-4">Production Pipeline</h2>

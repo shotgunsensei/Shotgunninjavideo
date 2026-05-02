@@ -27,4 +27,5 @@ export interface Project {
   durationSec?: number;
   bpm?: number;
   keySignature?: string;
+  brandPresetId?: string | null;
 }
