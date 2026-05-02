@@ -36,6 +36,26 @@ The sidebar uses `NavSection` + `NavItem` primitives with a left rail glow on th
 
 The API server is built with Express 5 and located at `artifacts/api-server`. It powers all application features.
 
+### Hardening (server)
+
+`artifacts/api-server/src/app.ts` is wired with:
+
+- `helmet` for default security headers (CSP off — API never serves HTML).
+- `cors` — permissive in dev, locked to `ALLOWED_ORIGINS` (comma-separated) in prod.
+- `express.json({ limit: "1mb" })` + matching urlencoded cap. The audio bytes never reach the server (they live in IndexedDB on the client) so 1 MB is plenty for metadata + analysis JSON.
+- `express-rate-limit` at 300 req / 15 min per IP on `/api/*` (with `app.set("trust proxy", 1)` so the limiter keys by the real client IP behind the Replit proxy).
+- A catch-all `/api` 404 handler followed by a centralized error middleware that maps `ZodError → 400`, `entity.too.large → 413`, CORS rejection → 403, and everything else → 500. In prod the message is sanitized; in dev the full message is returned. All errors are logged with request context via `req.log`.
+
+Audio metadata uploads (`POST /api/projects/:id/audio`) additionally enforce a mime-type allowlist, the same 100 MB size cap as the client, a 255-char filename cap, and a project-existence check before any DB mutation.
+
+### Graceful audio analysis fallback
+
+`POST /api/projects/:id/analyze` accepts a Web-Audio-derived analysis payload from the browser, but if the body is empty (e.g. the IndexedDB cache was cleared, or the browser failed to decode the file), the server falls back to a deterministic mock analysis via `lib/mockAnalysis.ts → buildMockAnalysis`. The client's `analysis.tsx` triggers this fallback automatically when no cached blob is found and the catch block on the analyze flow marks the active stage as error and surfaces a toast. End result: the user is never blocked from progressing to the storyboard.
+
+## Documentation
+
+`README.md` (project root) is the canonical onboarding doc. Update it whenever env vars, workflows, or setup steps change. `.env.example` lists every variable the project reads (`PORT`, `BASE_PATH`, `DATABASE_URL`, `SESSION_SECRET`, `NODE_ENV`, `ALLOWED_ORIGINS`, `BILLING_PROVIDER`, and the three reserved Stripe slots). On Replit, `PORT`, `BASE_PATH`, and `DATABASE_URL` are injected automatically per artifact — never hard-code them.
+
 ## Database
 
 PostgreSQL is used as the database, with Drizzle ORM for database interactions. Data validation is handled by Zod.

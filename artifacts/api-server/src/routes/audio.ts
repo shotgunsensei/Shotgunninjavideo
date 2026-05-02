@@ -14,9 +14,58 @@ import { buildMockAnalysis } from "../lib/mockAnalysis";
 
 const router: IRouter = Router();
 
+// Defense-in-depth allowlist. The actual audio bytes never reach the server
+// (they live in IndexedDB on the client), but we still validate the metadata
+// to keep poisoned values from showing up in exports or activity logs.
+const ALLOWED_AUDIO_MIME = new Set([
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/wave",
+  "audio/x-wav",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/aac",
+  "audio/flac",
+  "audio/x-flac",
+  "audio/ogg",
+]);
+const MAX_AUDIO_BYTES = 100 * 1024 * 1024; // 100 MB — matches the client cap
+const MAX_FILENAME_LEN = 255;
+
 router.post("/projects/:id/audio", async (req, res) => {
   const id = req.params.id;
   const body = UploadAudioBody.parse(req.body);
+
+  // Validate metadata even though the bytes themselves never reach us
+  if (!ALLOWED_AUDIO_MIME.has(body.mimeType)) {
+    res.status(415).json({
+      error: `Unsupported audio mime type: ${body.mimeType}`,
+    });
+    return;
+  }
+  if (body.sizeBytes <= 0 || body.sizeBytes > MAX_AUDIO_BYTES) {
+    res.status(413).json({
+      error: `Audio file size must be between 1 byte and ${MAX_AUDIO_BYTES} bytes.`,
+    });
+    return;
+  }
+  if (!body.fileName || body.fileName.length > MAX_FILENAME_LEN) {
+    res.status(400).json({
+      error: `Filename must be 1–${MAX_FILENAME_LEN} characters.`,
+    });
+    return;
+  }
+  // Confirm the project exists before mutating downstream tables
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(eq(projectsTable.id, id));
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+
   await db.delete(audioFilesTable).where(eq(audioFilesTable.projectId, id));
   const [audio] = await db
     .insert(audioFilesTable)
