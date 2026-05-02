@@ -722,6 +722,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExportRecord"
 
+  /projects/{id}/prompt-engine:
+    get:
+      operationId: getPromptEngine
+      tags: [prompts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptEngineResponse"
+
   /settings:
     get:
       operationId: getSettings
@@ -1203,6 +1221,119 @@ components:
         format:
           type: string
           enum: [json, txt, production_plan]
+
+    PlatformId:
+      type: string
+      enum:
+        - runway
+        - pika
+        - kling
+        - luma
+        - pixverse
+        - stable_diffusion
+        - midjourney
+        - leonardo
+        - capcut
+        - davinci
+
+    PromptBlock:
+      type: object
+      required:
+        - subject
+        - setting
+        - visualStyle
+        - cameraMotion
+        - lighting
+        - mood
+        - colorPalette
+        - aspectRatio
+        - negativePrompt
+        - durationSec
+        - transition
+      properties:
+        subject: { type: string }
+        setting: { type: string }
+        visualStyle: { type: string }
+        cameraMotion: { type: string }
+        lighting: { type: string }
+        mood: { type: string }
+        colorPalette: { type: string }
+        aspectRatio: { type: string }
+        negativePrompt: { type: string }
+        durationSec: { type: number }
+        transition: { type: string }
+
+    PlatformPromptMap:
+      type: object
+      required:
+        - runway
+        - pika
+        - kling
+        - luma
+        - pixverse
+        - stable_diffusion
+        - midjourney
+        - leonardo
+        - capcut
+        - davinci
+      properties:
+        runway: { type: string }
+        pika: { type: string }
+        kling: { type: string }
+        luma: { type: string }
+        pixverse: { type: string }
+        stable_diffusion: { type: string }
+        midjourney: { type: string }
+        leonardo: { type: string }
+        capcut: { type: string }
+        davinci: { type: string }
+
+    PlatformMeta:
+      type: object
+      required: [id, label, kind, description]
+      properties:
+        id: { $ref: "#/components/schemas/PlatformId" }
+        label: { type: string }
+        kind:
+          type: string
+          enum: [video, image, editing]
+        description: { type: string }
+
+    ScenePromptEngineRow:
+      type: object
+      required:
+        - sceneId
+        - sceneIndex
+        - sceneTitle
+        - startSec
+        - endSec
+        - shotType
+        - cameraMovement
+        - block
+        - platforms
+      properties:
+        sceneId: { type: string }
+        sceneIndex: { type: integer }
+        sceneTitle: { type: string }
+        startSec: { type: number }
+        endSec: { type: number }
+        shotType: { type: string }
+        cameraMovement: { type: string }
+        block: { $ref: "#/components/schemas/PromptBlock" }
+        platforms: { $ref: "#/components/schemas/PlatformPromptMap" }
+
+    PromptEngineResponse:
+      type: object
+      required: [scenes, platforms]
+      properties:
+        scenes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenePromptEngineRow"
+        platforms:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformMeta"
 
     Settings:
       type: object

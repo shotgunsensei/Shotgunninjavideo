@@ -927,6 +927,68 @@ export const CreateExportBody = zod.object({
   format: zod.enum(["json", "txt", "production_plan"]),
 });
 
+export const GetPromptEngineParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetPromptEngineResponse = zod.object({
+  scenes: zod.array(
+    zod.object({
+      sceneId: zod.string(),
+      sceneIndex: zod.number(),
+      sceneTitle: zod.string(),
+      startSec: zod.number(),
+      endSec: zod.number(),
+      shotType: zod.string(),
+      cameraMovement: zod.string(),
+      block: zod.object({
+        subject: zod.string(),
+        setting: zod.string(),
+        visualStyle: zod.string(),
+        cameraMotion: zod.string(),
+        lighting: zod.string(),
+        mood: zod.string(),
+        colorPalette: zod.string(),
+        aspectRatio: zod.string(),
+        negativePrompt: zod.string(),
+        durationSec: zod.number(),
+        transition: zod.string(),
+      }),
+      platforms: zod.object({
+        runway: zod.string(),
+        pika: zod.string(),
+        kling: zod.string(),
+        luma: zod.string(),
+        pixverse: zod.string(),
+        stable_diffusion: zod.string(),
+        midjourney: zod.string(),
+        leonardo: zod.string(),
+        capcut: zod.string(),
+        davinci: zod.string(),
+      }),
+    }),
+  ),
+  platforms: zod.array(
+    zod.object({
+      id: zod.enum([
+        "runway",
+        "pika",
+        "kling",
+        "luma",
+        "pixverse",
+        "stable_diffusion",
+        "midjourney",
+        "leonardo",
+        "capcut",
+        "davinci",
+      ]),
+      label: zod.string(),
+      kind: zod.enum(["video", "image", "editing"]),
+      description: zod.string(),
+    }),
+  ),
+});
+
 export const GetSettingsResponse = zod.object({
   defaultModel: zod.enum([
     "runway",

@@ -427,6 +427,81 @@ export interface CreateExportInput {
   format: CreateExportInputFormat;
 }
 
+export type PlatformId = (typeof PlatformId)[keyof typeof PlatformId];
+
+export const PlatformId = {
+  runway: "runway",
+  pika: "pika",
+  kling: "kling",
+  luma: "luma",
+  pixverse: "pixverse",
+  stable_diffusion: "stable_diffusion",
+  midjourney: "midjourney",
+  leonardo: "leonardo",
+  capcut: "capcut",
+  davinci: "davinci",
+} as const;
+
+export interface PromptBlock {
+  subject: string;
+  setting: string;
+  visualStyle: string;
+  cameraMotion: string;
+  lighting: string;
+  mood: string;
+  colorPalette: string;
+  aspectRatio: string;
+  negativePrompt: string;
+  durationSec: number;
+  transition: string;
+}
+
+export interface PlatformPromptMap {
+  runway: string;
+  pika: string;
+  kling: string;
+  luma: string;
+  pixverse: string;
+  stable_diffusion: string;
+  midjourney: string;
+  leonardo: string;
+  capcut: string;
+  davinci: string;
+}
+
+export type PlatformMetaKind =
+  (typeof PlatformMetaKind)[keyof typeof PlatformMetaKind];
+
+export const PlatformMetaKind = {
+  video: "video",
+  image: "image",
+  editing: "editing",
+} as const;
+
+export interface PlatformMeta {
+  id: PlatformId;
+  label: string;
+  kind: PlatformMetaKind;
+  description: string;
+}
+
+export interface ScenePromptEngineRow {
+  sceneId: string;
+  sceneIndex: number;
+  sceneTitle: string;
+  startSec: number;
+  endSec: number;
+  shotType: string;
+  cameraMovement: string;
+  block: PromptBlock;
+  platforms: PlatformPromptMap;
+}
+
+export interface PromptEngineResponse {
+  scenes: ScenePromptEngineRow[];
+  platforms: PlatformMeta[];
+}
+
 export type SettingsDefaultModel =
   (typeof SettingsDefaultModel)[keyof typeof SettingsDefaultModel];
 

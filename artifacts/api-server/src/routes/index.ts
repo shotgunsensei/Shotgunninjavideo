@@ -6,6 +6,7 @@ import timelineRouter from "./timeline";
 import storyboardRouter from "./storyboard";
 import lyricsRouter from "./lyrics";
 import promptsRouter from "./prompts";
+import promptEngineRouter from "./promptEngine";
 import exportsRouter from "./exports";
 import settingsRouter from "./settings";
 import statsRouter from "./stats";
@@ -20,6 +21,7 @@ router.use(timelineRouter);
 router.use(storyboardRouter);
 router.use(lyricsRouter);
 router.use(promptsRouter);
+router.use(promptEngineRouter);
 router.use(exportsRouter);
 router.use(settingsRouter);
 

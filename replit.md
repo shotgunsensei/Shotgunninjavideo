@@ -37,7 +37,7 @@ Shotgun Ninjas Video Engine — a DIY alternative to AI music video tools (like 
 
 ## Workflow
 
-Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → **(optional) Lyrics**: paste raw or `[mm:ss.cs]` / `[hh:mm:ss]` timestamped lyrics, parse, hand-assign untimed lines to scenes, then "Improve Storyboard" to regenerate unlocked scenes informed by per-scene lyric snippets → generate storyboard → generate scene prompts → export JSON/TXT/production plan.
+Upload song → "Deep Thinking" analysis (5 stages: Song analysis / Understanding emotions / Conceiving visual ideas / Storyline design / Content preview) → **(optional) Lyrics**: paste raw or `[mm:ss.cs]` / `[hh:mm:ss]` timestamped lyrics, parse, hand-assign untimed lines to scenes, then "Improve Storyboard" to regenerate unlocked scenes informed by per-scene lyric snippets → generate storyboard → **Prompt Engine**: per-scene structured PromptBlock (subject/setting/visualStyle/cameraMotion/lighting/mood/palette/aspect/negative/duration/transition) rendered as 10 platform-specific prompts (Runway, Pika, Kling, Luma, PixVerse, Stable Diffusion, Midjourney, Leonardo, CapCut notes, DaVinci notes) with one-click copy and TXT/JSON/CSV-shot-list/Production-plan exports → generate scene prompts → export JSON/TXT/production plan.
 
 Lyric lines whose `sceneId` points at a scene that gets regenerated are remapped via `segmentId` (`remapLyricSceneIds` in `routes/storyboard.ts`) so manual assignments survive both `force` and non-force regeneration.
 

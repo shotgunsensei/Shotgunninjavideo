@@ -33,6 +33,7 @@ import type {
   Project,
   ProjectDetail,
   Prompt,
+  PromptEngineResponse,
   SaveLyricsInput,
   Settings,
   SplitSegmentInput,
@@ -2831,6 +2832,86 @@ export const useCreateExport = <
 > => {
   return useMutation(getCreateExportMutationOptions(options));
 };
+
+export const getGetPromptEngineUrl = (id: string) => {
+  return `/api/projects/${id}/prompt-engine`;
+};
+
+export const getPromptEngine = async (
+  id: string,
+  options?: RequestInit,
+): Promise<PromptEngineResponse> => {
+  return customFetch<PromptEngineResponse>(getGetPromptEngineUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPromptEngineQueryKey = (id: string) => {
+  return [`/api/projects/${id}/prompt-engine`] as const;
+};
+
+export const getGetPromptEngineQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPromptEngine>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPromptEngine>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPromptEngineQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPromptEngine>>> = ({
+    signal,
+  }) => getPromptEngine(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPromptEngine>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPromptEngineQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPromptEngine>>
+>;
+export type GetPromptEngineQueryError = ErrorType<unknown>;
+
+export function useGetPromptEngine<
+  TData = Awaited<ReturnType<typeof getPromptEngine>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPromptEngine>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPromptEngineQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 export const getGetSettingsUrl = () => {
   return `/api/settings`;

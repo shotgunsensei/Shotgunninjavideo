@@ -14,6 +14,7 @@ import Analysis from "@/pages/analysis";
 import Storyboard from "@/pages/storyboard";
 import SceneEditor from "@/pages/scene-editor";
 import LyricsPage from "@/pages/lyrics";
+import PromptEngine from "@/pages/prompt-engine";
 import Export from "@/pages/export";
 import Settings from "@/pages/settings";
 
@@ -32,6 +33,7 @@ function Router() {
         <Route path="/projects/:id/storyboard" component={Storyboard} />
         <Route path="/projects/:id/lyrics" component={LyricsPage} />
         <Route path="/projects/:id/scenes/:sceneId" component={SceneEditor} />
+        <Route path="/projects/:id/prompt-engine" component={PromptEngine} />
         <Route path="/projects/:id/export" component={Export} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
