@@ -833,3 +833,11 @@ export interface SaveAsBrandPresetInput {
   /** Optional override for the new preset's name. */
   name?: string;
 }
+
+export type GetAdminDiagnostics200 = { [key: string]: unknown };
+
+export type GetAdminProjectFull200 = { [key: string]: unknown };
+
+export type TestExportFormat200 = { [key: string]: unknown };
+
+export type ResetDemoData200 = { [key: string]: unknown };

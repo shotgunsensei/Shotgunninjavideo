@@ -982,6 +982,78 @@ paths:
           content:
             text/plain: { schema: { type: string } }
 
+  /admin/diagnostics:
+    get:
+      operationId: getAdminDiagnostics
+      tags: [admin]
+      summary: Get diagnostics for all projects (quality scores, validation, subscription gate state)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /admin/projects/{id}/full:
+    get:
+      operationId: getAdminProjectFull
+      tags: [admin]
+      summary: Full JSON dump of every row related to one project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /admin/projects/{id}/test-export/{format}:
+    post:
+      operationId: testExportFormat
+      tags: [admin]
+      summary: Run an export builder against a project without persisting; returns size + preview or error
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [production_plan, txt, json, csv_shot_list, lyrics_timing, ai_prompt_pack, capcut_guide, davinci_guide, treatment, social_captions]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /admin/reset-demo-data:
+    post:
+      operationId: resetDemoData
+      tags: [admin]
+      summary: Wipe and re-seed the built-in demo projects
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
   /brand-presets:
     get:
       operationId: listBrandPresets

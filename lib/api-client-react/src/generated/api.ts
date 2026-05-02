@@ -32,6 +32,8 @@ import type {
   CreateSegmentInput,
   ExportRecord,
   GenerateStoryboardInput,
+  GetAdminDiagnostics200,
+  GetAdminProjectFull200,
   HealthStatus,
   LyricLine,
   MarketingAsset,
@@ -44,6 +46,7 @@ import type {
   Prompt,
   PromptEngineResponse,
   RegenerateMarketingAssetInput,
+  ResetDemoData200,
   SaveAsBrandPresetInput,
   SaveLyricsInput,
   Settings,
@@ -51,6 +54,7 @@ import type {
   StatsOverview,
   StoryboardScene,
   SubmitAnalysisInput,
+  TestExportFormat200,
   TimelineSegment,
   UpdateBrandPresetInput,
   UpdateContinuityInput,
@@ -4058,6 +4062,422 @@ export function useExportMarketingAssets<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get diagnostics for all projects (quality scores, validation, subscription gate state)
+ */
+export const getGetAdminDiagnosticsUrl = () => {
+  return `/api/admin/diagnostics`;
+};
+
+export const getAdminDiagnostics = async (
+  options?: RequestInit,
+): Promise<GetAdminDiagnostics200> => {
+  return customFetch<GetAdminDiagnostics200>(getGetAdminDiagnosticsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminDiagnosticsQueryKey = () => {
+  return [`/api/admin/diagnostics`] as const;
+};
+
+export const getGetAdminDiagnosticsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminDiagnostics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminDiagnostics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminDiagnosticsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminDiagnostics>>
+  > = ({ signal }) => getAdminDiagnostics({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminDiagnostics>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAdminDiagnosticsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminDiagnostics>>
+>;
+export type GetAdminDiagnosticsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get diagnostics for all projects (quality scores, validation, subscription gate state)
+ */
+
+export function useGetAdminDiagnostics<
+  TData = Awaited<ReturnType<typeof getAdminDiagnostics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminDiagnostics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAdminDiagnosticsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Full JSON dump of every row related to one project
+ */
+export const getGetAdminProjectFullUrl = (id: string) => {
+  return `/api/admin/projects/${id}/full`;
+};
+
+export const getAdminProjectFull = async (
+  id: string,
+  options?: RequestInit,
+): Promise<GetAdminProjectFull200> => {
+  return customFetch<GetAdminProjectFull200>(getGetAdminProjectFullUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminProjectFullQueryKey = (id: string) => {
+  return [`/api/admin/projects/${id}/full`] as const;
+};
+
+export const getGetAdminProjectFullQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminProjectFull>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAdminProjectFull>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminProjectFullQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminProjectFull>>
+  > = ({ signal }) => getAdminProjectFull(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminProjectFull>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAdminProjectFullQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminProjectFull>>
+>;
+export type GetAdminProjectFullQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Full JSON dump of every row related to one project
+ */
+
+export function useGetAdminProjectFull<
+  TData = Awaited<ReturnType<typeof getAdminProjectFull>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAdminProjectFull>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAdminProjectFullQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Run an export builder against a project without persisting; returns size + preview or error
+ */
+export const getTestExportFormatUrl = (
+  id: string,
+  format:
+    | "production_plan"
+    | "txt"
+    | "json"
+    | "csv_shot_list"
+    | "lyrics_timing"
+    | "ai_prompt_pack"
+    | "capcut_guide"
+    | "davinci_guide"
+    | "treatment"
+    | "social_captions",
+) => {
+  return `/api/admin/projects/${id}/test-export/${format}`;
+};
+
+export const testExportFormat = async (
+  id: string,
+  format:
+    | "production_plan"
+    | "txt"
+    | "json"
+    | "csv_shot_list"
+    | "lyrics_timing"
+    | "ai_prompt_pack"
+    | "capcut_guide"
+    | "davinci_guide"
+    | "treatment"
+    | "social_captions",
+  options?: RequestInit,
+): Promise<TestExportFormat200> => {
+  return customFetch<TestExportFormat200>(getTestExportFormatUrl(id, format), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getTestExportFormatMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testExportFormat>>,
+    TError,
+    {
+      id: string;
+      format:
+        | "production_plan"
+        | "txt"
+        | "json"
+        | "csv_shot_list"
+        | "lyrics_timing"
+        | "ai_prompt_pack"
+        | "capcut_guide"
+        | "davinci_guide"
+        | "treatment"
+        | "social_captions";
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof testExportFormat>>,
+  TError,
+  {
+    id: string;
+    format:
+      | "production_plan"
+      | "txt"
+      | "json"
+      | "csv_shot_list"
+      | "lyrics_timing"
+      | "ai_prompt_pack"
+      | "capcut_guide"
+      | "davinci_guide"
+      | "treatment"
+      | "social_captions";
+  },
+  TContext
+> => {
+  const mutationKey = ["testExportFormat"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof testExportFormat>>,
+    {
+      id: string;
+      format:
+        | "production_plan"
+        | "txt"
+        | "json"
+        | "csv_shot_list"
+        | "lyrics_timing"
+        | "ai_prompt_pack"
+        | "capcut_guide"
+        | "davinci_guide"
+        | "treatment"
+        | "social_captions";
+    }
+  > = (props) => {
+    const { id, format } = props ?? {};
+
+    return testExportFormat(id, format, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TestExportFormatMutationResult = NonNullable<
+  Awaited<ReturnType<typeof testExportFormat>>
+>;
+
+export type TestExportFormatMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Run an export builder against a project without persisting; returns size + preview or error
+ */
+export const useTestExportFormat = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testExportFormat>>,
+    TError,
+    {
+      id: string;
+      format:
+        | "production_plan"
+        | "txt"
+        | "json"
+        | "csv_shot_list"
+        | "lyrics_timing"
+        | "ai_prompt_pack"
+        | "capcut_guide"
+        | "davinci_guide"
+        | "treatment"
+        | "social_captions";
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof testExportFormat>>,
+  TError,
+  {
+    id: string;
+    format:
+      | "production_plan"
+      | "txt"
+      | "json"
+      | "csv_shot_list"
+      | "lyrics_timing"
+      | "ai_prompt_pack"
+      | "capcut_guide"
+      | "davinci_guide"
+      | "treatment"
+      | "social_captions";
+  },
+  TContext
+> => {
+  return useMutation(getTestExportFormatMutationOptions(options));
+};
+
+/**
+ * @summary Wipe and re-seed the built-in demo projects
+ */
+export const getResetDemoDataUrl = () => {
+  return `/api/admin/reset-demo-data`;
+};
+
+export const resetDemoData = async (
+  options?: RequestInit,
+): Promise<ResetDemoData200> => {
+  return customFetch<ResetDemoData200>(getResetDemoDataUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getResetDemoDataMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetDemoData>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetDemoData>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["resetDemoData"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetDemoData>>,
+    void
+  > = () => {
+    return resetDemoData(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetDemoDataMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetDemoData>>
+>;
+
+export type ResetDemoDataMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Wipe and re-seed the built-in demo projects
+ */
+export const useResetDemoData = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetDemoData>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof resetDemoData>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getResetDemoDataMutationOptions(options));
+};
 
 /**
  * @summary List all brand presets (defaults + user-created)

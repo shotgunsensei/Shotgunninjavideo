@@ -1557,6 +1557,52 @@ export const ExportMarketingAssetsParams = zod.object({
 });
 
 /**
+ * @summary Get diagnostics for all projects (quality scores, validation, subscription gate state)
+ */
+export const GetAdminDiagnosticsResponse = zod.record(
+  zod.string(),
+  zod.unknown(),
+);
+
+/**
+ * @summary Full JSON dump of every row related to one project
+ */
+export const GetAdminProjectFullParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetAdminProjectFullResponse = zod.record(
+  zod.string(),
+  zod.unknown(),
+);
+
+/**
+ * @summary Run an export builder against a project without persisting; returns size + preview or error
+ */
+export const TestExportFormatParams = zod.object({
+  id: zod.coerce.string(),
+  format: zod.enum([
+    "production_plan",
+    "txt",
+    "json",
+    "csv_shot_list",
+    "lyrics_timing",
+    "ai_prompt_pack",
+    "capcut_guide",
+    "davinci_guide",
+    "treatment",
+    "social_captions",
+  ]),
+});
+
+export const TestExportFormatResponse = zod.record(zod.string(), zod.unknown());
+
+/**
+ * @summary Wipe and re-seed the built-in demo projects
+ */
+export const ResetDemoDataResponse = zod.record(zod.string(), zod.unknown());
+
+/**
  * @summary List all brand presets (defaults + user-created)
  */
 export const ListBrandPresetsResponseItem = zod.object({

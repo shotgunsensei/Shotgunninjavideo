@@ -16,6 +16,7 @@ import {
   Palette,
   Megaphone,
   Hammer,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
@@ -39,6 +40,7 @@ export function Sidebar() {
     { href: "/brand-presets", label: "Brand Presets", icon: Palette },
     { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/admin", label: "Admin / Debug", icon: Bug },
   ];
 
   const projectSteps = projectId && projectId !== "new" ? [

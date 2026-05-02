@@ -22,6 +22,7 @@ import Pricing from "@/pages/pricing";
 import BrandPresetsPage from "@/pages/brand-presets";
 import MarketingPage from "@/pages/marketing";
 import RenderPlanPage from "@/pages/render-plan";
+import AdminPage from "@/pages/admin";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/brand-presets" component={BrandPresetsPage} />
+        <Route path="/admin" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
